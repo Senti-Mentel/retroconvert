@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RetroConvert</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #0b0e14;
+  --bg2:       #111620;
+  --bg3:       #181e2a;
+  --border:    #1e2a3a;
+  --accent:    #00d4ff;
+  --accent2:   #ff6b35;
+  --accent3:   #a855f7;
+  --green:     #22c55e;
+  --red:       #ef4444;
+  --yellow:    #f59e0b;
+  --text:      #e2e8f0;
+  --text2:     #94a3b8;
+  --text3:     #64748b;
+  --font-mono: 'Share Tech Mono', monospace;
+  --font-main: 'Exo 2', sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-main); background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+body::before { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px); pointer-events: none; z-index: 9999; }
+
+/* Header */
+.header { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: center; gap: 24px; height: 60px; position: sticky; top: 0; z-index: 100; }
+.logo { font-family: var(--font-mono); font-size: 1.4rem; color: var(--accent); text-shadow: 0 0 20px rgba(0,212,255,0.5); letter-spacing: 2px; white-space: nowrap; }
+.logo span { color: var(--accent2); }
+.status-bar { display: flex; gap: 12px; flex: 1; font-size: 0.78rem; font-family: var(--font-mono); flex-wrap: wrap; }
+.stat-chip { display: flex; align-items: center; gap: 6px; background: var(--bg3); border: 1px solid var(--border); padding: 4px 10px; border-radius: 4px; color: var(--text2); }
+.stat-chip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); }
+.stat-chip.watching .dot { background: var(--green); box-shadow: 0 0 6px var(--green); animation: pulse 2s infinite; }
+.stat-chip.pending  .dot { background: var(--yellow); }
+.stat-chip.running  .dot { background: var(--accent); animation: pulse 1s infinite; }
+.stat-chip.errors   .dot { background: var(--red); }
+.stat-chip.done     .dot { background: var(--green); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* Layout */
+.app { display: grid; grid-template-columns: 220px 1fr; height: calc(100vh - 60px); }
+.sidebar { background: var(--bg2); border-right: 1px solid var(--border); overflow-y: auto; padding: 16px 0; }
+.nav-label { font-size: 0.65rem; font-family: var(--font-mono); color: var(--text3); letter-spacing: 2px; text-transform: uppercase; padding: 8px 20px 4px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 20px; cursor: pointer; color: var(--text2); font-size: 0.88rem; font-weight: 500; transition: all 0.15s; user-select: none; border-left: 2px solid transparent; }
+.nav-item:hover { background: var(--bg3); color: var(--text); }
+.nav-item.active { background: rgba(0,212,255,0.08); color: var(--accent); border-left-color: var(--accent); }
+.nav-item .icon { font-size: 1rem; width: 20px; text-align: center; }
+.nav-item .badge { margin-left: auto; background: var(--accent2); color: #fff; font-size: 0.65rem; padding: 2px 6px; border-radius: 10px; font-family: var(--font-mono); }
+.nav-divider { height: 1px; background: var(--border); margin: 8px 12px; }
+.content { overflow-y: auto; padding: 24px; }
+.page { display: none; }
+.page.active { display: block; }
+
+/* Cards */
+.card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 20px; }
+.card-header { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 0.9rem; }
+.card-body { padding: 18px; }
+
+/* Dashboard metrics */
+.dash-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.metric-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; text-align: center; }
+.metric-card .value { font-size: 2rem; font-weight: 900; font-family: var(--font-mono); line-height: 1; margin-bottom: 4px; }
+.metric-card .label { font-size: 0.72rem; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; }
+.metric-card.accent  .value { color: var(--accent); }
+.metric-card.yellow  .value { color: var(--yellow); }
+.metric-card.green   .value { color: var(--green); }
+.metric-card.red     .value { color: var(--red); }
+
+/* Active job card */
+.active-job-card {
+  background: var(--bg3);
+  border: 1px solid rgba(0,212,255,0.2);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+.active-job-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.active-job-header .filename { font-family: var(--font-mono); font-size: 0.85rem; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.active-job-header .console { font-size: 0.75rem; color: var(--text3); white-space: nowrap; }
+.progress-wrap { position: relative; }
+.progress-track { height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; }
+.progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent3));
+  transition: width 0.6s ease;
+  position: relative;
+  overflow: hidden;
+}
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: shimmer 1.5s infinite;
+}
+@keyframes shimmer { to { left: 100%; } }
+.progress-meta { display: flex; justify-content: space-between; margin-top: 5px; font-size: 0.72rem; color: var(--text3); font-family: var(--font-mono); }
+
+/* Forms */
+.form-row { display: flex; gap: 12px; margin-bottom: 14px; align-items: flex-start; }
+.form-row.col { flex-direction: column; }
+.form-group { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+label { font-size: 0.78rem; color: var(--text2); font-weight: 600; letter-spacing: 0.5px; }
+input[type="text"], input[type="number"], select, textarea { background: var(--bg3); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 6px; font-family: var(--font-mono); font-size: 0.85rem; transition: border-color 0.2s; width: 100%; }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(0,212,255,0.1); }
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); gap: 16px; }
+.toggle-row:last-child { border-bottom: none; }
+.toggle-row .desc { flex: 1; }
+.toggle-row .desc strong { display: block; font-size: 0.88rem; margin-bottom: 2px; }
+.toggle-row .desc small { color: var(--text3); font-size: 0.76rem; }
+.toggle { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; inset: 0; background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; cursor: pointer; transition: 0.2s; }
+.slider:before { content: ''; position: absolute; width: 16px; height: 16px; left: 3px; bottom: 3px; background: var(--text3); border-radius: 50%; transition: 0.2s; }
+input:checked + .slider { background: rgba(0,212,255,0.2); border-color: var(--accent); }
+input:checked + .slider:before { transform: translateX(20px); background: var(--accent); }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; gap: 7px; padding: 8px 16px; border-radius: 6px; border: 1px solid transparent; cursor: pointer; font-family: var(--font-main); font-size: 0.85rem; font-weight: 600; transition: all 0.15s; }
+.btn:hover { filter: brightness(1.15); transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+.btn-primary   { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+.btn-secondary { background: transparent; color: var(--text2); border-color: var(--border); }
+.btn-secondary:hover { color: var(--text); border-color: var(--text2); }
+.btn-danger  { background: rgba(239,68,68,0.15); color: var(--red); border-color: var(--red); }
+.btn-success { background: rgba(34,197,94,0.15); color: var(--green); border-color: var(--green); }
+.btn-warning { background: rgba(245,158,11,0.15); color: var(--yellow); border-color: var(--yellow); }
+.btn-sm { padding: 5px 10px; font-size: 0.78rem; }
+.btn-xs { padding: 3px 8px; font-size: 0.72rem; }
+
+/* Tables */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+th { background: var(--bg3); border-bottom: 1px solid var(--border); padding: 10px 12px; text-align: left; font-size: 0.72rem; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+td { padding: 9px 12px; border-bottom: 1px solid rgba(30,42,58,0.5); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(0,212,255,0.02); }
+
+/* Inline progress in table */
+.table-progress { min-width: 120px; }
+.table-progress-track { height: 4px; background: var(--bg3); border-radius: 2px; overflow: hidden; margin-top: 4px; }
+.table-progress-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--accent), var(--accent3)); transition: width 0.5s; }
+.table-progress-label { font-size: 0.7rem; color: var(--text3); font-family: var(--font-mono); }
+
+/* Badges */
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 4px; font-size: 0.72rem; font-family: var(--font-mono); font-weight: 600; }
+.badge-pending   { background: rgba(245,158,11,0.15); color: var(--yellow); }
+.badge-running   { background: rgba(0,212,255,0.15); color: var(--accent); }
+.badge-done      { background: rgba(34,197,94,0.15); color: var(--green); }
+.badge-simulated { background: rgba(168,85,247,0.15); color: var(--accent3); }
+.badge-error     { background: rgba(239,68,68,0.15); color: var(--red); }
+.badge-skipped   { background: rgba(100,116,139,0.15); color: var(--text3); }
+
+/* Log terminal */
+.log-terminal { background: #050810; border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-family: var(--font-mono); font-size: 0.78rem; line-height: 1.7; height: 460px; overflow-y: auto; color: #7fbfff; }
+.log-terminal .log-line { white-space: pre-wrap; word-break: break-all; }
+.log-terminal .log-line.done      { color: var(--green); }
+.log-terminal .log-line.error     { color: var(--red); }
+.log-terminal .log-line.watching  { color: var(--accent); }
+.log-terminal .log-line.queued    { color: var(--yellow); }
+.log-terminal .log-line.skipped   { color: var(--text3); }
+.log-terminal .log-line.simulated { color: var(--accent3); }
+.log-terminal .log-line.extract   { color: #f0a; }
+
+/* Console cards */
+.console-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
+.console-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; transition: border-color 0.2s; }
+.console-card.enabled { border-color: rgba(0,212,255,0.25); }
+.console-card-header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.2); }
+.console-card-header .name { font-weight: 700; font-size: 0.92rem; flex: 1; }
+.console-card-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+.console-card .field-row { display: flex; align-items: center; gap: 8px; }
+.console-card .field-row label { width: 90px; font-size: 0.75rem; flex-shrink: 0; }
+.console-card .field-row input,
+.console-card .field-row select { flex: 1; padding: 6px 9px; font-size: 0.8rem; }
+
+/* Page header */
+.page-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 22px; }
+.page-header h1 { font-size: 1.3rem; font-weight: 900; letter-spacing: 1px; }
+.page-header p { font-size: 0.82rem; color: var(--text3); margin-top: 2px; }
+.page-header-actions { margin-left: auto; display: flex; gap: 8px; flex-shrink: 0; }
+
+/* Empty state */
+.empty-state { text-align: center; padding: 40px 20px; color: var(--text3); }
+.empty-state .icon { font-size: 2.5rem; margin-bottom: 10px; }
+.empty-state p { font-size: 0.85rem; }
+
+/* Toast */
+#toast { position: fixed; bottom: 24px; right: 24px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; font-size: 0.85rem; z-index: 9000; display: none; box-shadow: 0 8px 30px rgba(0,0,0,0.4); }
+#toast.success { border-color: var(--green); color: var(--green); }
+#toast.error   { border-color: var(--red); color: var(--red); }
+#toast.info    { border-color: var(--accent); color: var(--accent); }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">RETRO<span>CONVERT</span></div>
+  <div class="status-bar">
+    <div class="stat-chip watching" id="chip-watching"><span class="dot"></span><span id="chip-watching-text">Idle</span></div>
+    <div class="stat-chip pending"><span class="dot"></span><span id="chip-pending">0 pending</span></div>
+    <div class="stat-chip running"><span class="dot"></span><span id="chip-running">0 running</span></div>
+    <div class="stat-chip done"><span class="dot"></span><span id="chip-done">0 done</span></div>
+    <div class="stat-chip errors"><span class="dot"></span><span id="chip-errors">0 errors</span></div>
+  </div>
+</header>
+
+<div class="app">
+  <nav class="sidebar">
+    <div class="nav-label">Main</div>
+    <div class="nav-item active" data-page="dashboard"><span class="icon">📊</span> Dashboard</div>
+    <div class="nav-item" data-page="queue"><span class="icon">⏳</span> Queue <span class="badge" id="nav-queue-badge" style="display:none">0</span></div>
+    <div class="nav-item" data-page="history"><span class="icon">📋</span> History</div>
+    <div class="nav-item" data-page="logs"><span class="icon">🖥</span> Logs</div>
+    <div class="nav-divider"></div>
+    <div class="nav-label">Config</div>
+    <div class="nav-item" data-page="settings"><span class="icon">⚙️</span> General Settings</div>
+    <div class="nav-item" data-page="consoles"><span class="icon">🎮</span> Consoles</div>
+  </nav>
+
+  <main class="content">
+
+    <!-- Dashboard -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div><h1>Dashboard</h1><p>Monitor your ROM conversion pipeline</p></div>
+        <div class="page-header-actions">
+          <button class="btn btn-secondary btn-sm" onclick="startWatcher()">▶ Start</button>
+          <button class="btn btn-secondary btn-sm" onclick="stopWatcher()">■ Stop</button>
+          <button class="btn btn-primary btn-sm" onclick="scanNow()">🔍 Scan Now</button>
+        </div>
+      </div>
+
+      <div class="dash-grid">
+        <div class="metric-card accent"><div class="value" id="m-pending">0</div><div class="label">Pending</div></div>
+        <div class="metric-card yellow"><div class="value" id="m-running">0</div><div class="label">Running</div></div>
+        <div class="metric-card green"><div class="value" id="m-done">0</div><div class="label">Completed</div></div>
+        <div class="metric-card red"><div class="value" id="m-errors">0</div><div class="label">Errors</div></div>
+      </div>
+
+      <!-- Active jobs with progress -->
+      <div class="card" id="active-jobs-card" style="display:none">
+        <div class="card-header"><span class="icon">⚡</span> Active Conversions</div>
+        <div class="card-body" id="active-jobs-body"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="icon">📁</span> Watch Directory</div>
+        <div class="card-body">
+          <div id="watch-dir-display" style="font-family:var(--font-mono);font-size:0.85rem;color:var(--text2);padding:10px;background:var(--bg3);border-radius:6px;border:1px solid var(--border);">Not configured</div>
+          <div style="margin-top:12px;display:flex;gap:10px;align-items:center;">
+            <button class="btn btn-primary btn-sm" onclick="showPage('settings')">Configure</button>
+            <span id="watcher-status" style="font-size:0.8rem;color:var(--text3);"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="icon">📊</span> Recent Activity</div>
+        <div class="card-body table-wrap" id="recent-activity">
+          <div class="empty-state"><div class="icon">🎮</div><p>No recent conversions</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Queue -->
+    <div class="page" id="page-queue">
+      <div class="page-header">
+        <div><h1>Conversion Queue</h1><p>Pending and active jobs</p></div>
+        <div class="page-header-actions">
+          <button class="btn btn-danger btn-sm" onclick="clearQueue()">🗑 Clear Pending</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-body table-wrap" id="queue-table-wrap">
+          <div class="empty-state"><div class="icon">⏳</div><p>Queue is empty</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- History -->
+    <div class="page" id="page-history">
+      <div class="page-header">
+        <div><h1>History</h1><p>Completed and failed jobs</p></div>
+      </div>
+      <div class="card">
+        <div class="card-body table-wrap" id="history-table-wrap">
+          <div class="empty-state"><div class="icon">📋</div><p>No history yet</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Logs -->
+    <div class="page" id="page-logs">
+      <div class="page-header">
+        <div><h1>Activity Log</h1><p>Real-time conversion log</p></div>
+        <div class="page-header-actions">
+          <button class="btn btn-secondary btn-sm" onclick="loadLogs()">🔄 Refresh</button>
+          <label class="btn btn-secondary btn-sm" style="cursor:pointer">
+            <input type="checkbox" id="auto-scroll-chk" checked style="margin-right:4px">Auto-scroll
+          </label>
+        </div>
+      </div>
+      <div class="log-terminal" id="log-terminal"></div>
+    </div>
+
+    <!-- Settings -->
+    <div class="page" id="page-settings">
+      <div class="page-header">
+        <div><h1>General Settings</h1><p>Configure watch directory and global options</p></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="icon">📁</span> Watch Directory</div>
+        <div class="card-body">
+          <div class="form-row col">
+            <div class="form-group">
+              <label>Root Watch Directory (absolute path)</label>
+              <input type="text" id="s-watch-dir" placeholder="/roms">
+              <small style="color:var(--text3);font-size:0.74rem;margin-top:4px;">
+                Subdirectory names must match the <strong>Folder</strong> field per console.
+                e.g. <code style="color:var(--accent);">/roms/PS1/</code> → PlayStation 1
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="icon">⚙️</span> Conversion Options</div>
+        <div class="card-body">
+          <div class="toggle-row">
+            <div class="desc">
+              <strong>Delete originals after conversion</strong>
+              <small>Permanently removes source files once a job completes successfully.</small>
+            </div>
+            <label class="toggle"><input type="checkbox" id="s-delete-originals"><span class="slider"></span></label>
+          </div>
+          <div class="toggle-row">
+            <div class="desc">
+              <strong>Parallel jobs</strong>
+              <small>Number of concurrent conversion jobs. Keep at 1 for HDDs, increase for SSDs.</small>
+            </div>
+            <input type="number" id="s-parallel-jobs" min="1" max="8" value="1" style="width:70px;">
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
+        <button class="btn btn-success" onclick="saveAndStartWatcher()">▶ Save & Start Watcher</button>
+      </div>
+    </div>
+
+    <!-- Consoles -->
+    <div class="page" id="page-consoles">
+      <div class="page-header">
+        <div><h1>Console Rules</h1><p>Per-console conversion settings</p></div>
+        <div class="page-header-actions">
+          <button class="btn btn-secondary btn-sm" onclick="addCustomConsole()">+ Add Console</button>
+          <button class="btn btn-primary btn-sm" onclick="saveConsoles()">💾 Save All</button>
+        </div>
+      </div>
+      <div class="console-grid" id="console-grid"></div>
+    </div>
+
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+let cfg = {};
+let queueData = [], historyData = [];
+const OUTPUT_FORMATS = {{ output_formats|tojson }};
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelector('[data-page="' + id + '"]')?.classList.add('active');
+  if (id === 'logs')     loadLogs();
+  if (id === 'queue')    renderQueue();
+  if (id === 'history')  renderHistory();
+  if (id === 'settings') loadSettings();
+  if (id === 'consoles') renderConsoles();
+}
+document.querySelectorAll('.nav-item').forEach(n => n.addEventListener('click', () => showPage(n.dataset.page)));
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+let toastTimer;
+function toast(msg, type='info') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = type; t.style.display = 'block';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.style.display = 'none', 3500);
+}
+
+async function apiFetch(url, opts={}) {
+  const r = await fetch(url, opts);
+  return r.json();
+}
+
+// ── Status polling ────────────────────────────────────────────────────────────
+async function pollStatus() {
+  try {
+    const s = await apiFetch('/api/status');
+    document.getElementById('m-pending').textContent  = s.pending;
+    document.getElementById('m-running').textContent  = s.running;
+    document.getElementById('m-done').textContent     = s.done;
+    document.getElementById('m-errors').textContent   = s.errors;
+    document.getElementById('chip-pending').textContent = s.pending + ' pending';
+    document.getElementById('chip-running').textContent = s.running + ' running';
+    document.getElementById('chip-done').textContent    = s.done + ' done';
+    document.getElementById('chip-errors').textContent  = s.errors + ' errors';
+
+    const wChip = document.getElementById('chip-watching');
+    const wText = document.getElementById('chip-watching-text');
+    if (s.watching) { wChip.classList.add('watching'); wText.textContent = 'Watching'; }
+    else { wChip.classList.remove('watching'); wText.textContent = 'Idle'; }
+
+    if (s.watch_dir) {
+      document.getElementById('watch-dir-display').textContent = s.watch_dir;
+      document.getElementById('watcher-status').textContent = s.watching ? '● Active' : '○ Stopped';
+    }
+
+    const badge = document.getElementById('nav-queue-badge');
+    const total = s.pending + s.running;
+    badge.style.display = total > 0 ? 'inline' : 'none';
+    badge.textContent = total;
+
+    // Active jobs progress cards
+    renderActiveJobs(s.active_jobs || []);
+
+    const activePage = document.querySelector('.page.active')?.id;
+    if (activePage === 'page-queue')   renderQueue();
+    if (activePage === 'page-history') renderHistory();
+    if (activePage === 'page-logs' && document.getElementById('auto-scroll-chk').checked) loadLogs();
+  } catch(e) {}
+}
+setInterval(pollStatus, 1500);
+pollStatus();
+
+// ── Active job progress cards ─────────────────────────────────────────────────
+function renderActiveJobs(jobs) {
+  const card = document.getElementById('active-jobs-card');
+  const body = document.getElementById('active-jobs-body');
+  if (!jobs.length) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  body.innerHTML = jobs.map(j => {
+    const pct     = j.progress || 0;
+    const msg     = j.progress_msg || (j.status === 'running' ? 'Processing…' : j.status);
+    const isExtract = msg.toLowerCase().includes('extract');
+    return `
+      <div class="active-job-card">
+        <div class="active-job-header">
+          <span style="font-size:1.1rem">${consoleIcon(j.console_id)}</span>
+          <span class="filename">${j.filename}</span>
+          <span class="console">${j.console_name}</span>
+          <span class="badge badge-running" style="margin-left:8px">${pct}%</span>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-track">
+            <div class="progress-fill" style="width:${pct}%"></div>
+          </div>
+          <div class="progress-meta">
+            <span>${isExtract ? '📦 ' : '⚙️ '}${msg || 'Working…'}</span>
+            <span style="color:var(--accent)">${j.output_fmt?.toUpperCase() || ''}</span>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── Queue & History ───────────────────────────────────────────────────────────
+async function fetchQueue() {
+  const d = await apiFetch('/api/queue');
+  queueData = d.queue; historyData = d.history;
+}
+
+function statusBadge(s) { return `<span class="badge badge-${s}">${s}</span>`; }
+
+function progressCell(j) {
+  if (j.status === 'running') {
+    const pct = j.progress || 0;
+    return `<div class="table-progress">
+      <div class="table-progress-label">${pct}% — ${(j.progress_msg||'').substring(0,30)}</div>
+      <div class="table-progress-track"><div class="table-progress-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }
+  if (j.status === 'done' || j.status === 'simulated') {
+    return `<div class="table-progress">
+      <div class="table-progress-label" style="color:var(--green)">100%</div>
+      <div class="table-progress-track"><div class="table-progress-fill" style="width:100%;background:var(--green)"></div></div>
+    </div>`;
+  }
+  if (j.status === 'error') return `<span style="color:var(--red);font-size:0.75rem">${(j.error||'').substring(0,40)}</span>`;
+  return '—';
+}
+
+function renderQueueTable(jobs, wrap, emptyMsg) {
+  if (!jobs.length) {
+    wrap.innerHTML = `<div class="empty-state"><div class="icon">⏳</div><p>${emptyMsg}</p></div>`;
+    return;
+  }
+  wrap.innerHTML = `<table>
+    <thead><tr><th>File</th><th>Game</th><th>Console</th><th>Output</th><th>Status</th><th>Progress</th><th>Created</th><th></th></tr></thead>
+    <tbody>` +
+    jobs.map(j => `<tr>
+      <td style="font-family:var(--font-mono);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${j.src}">${j.filename}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+        <span style="font-size:0.82rem">${j.game_name || '—'}</span>
+        ${j.disc_num ? `<span class="badge" style="background:rgba(168,85,247,0.15);color:var(--accent3);margin-left:4px">Disc ${j.disc_num}</span>` : ''}
+      </td>
+      <td style="white-space:nowrap">${consoleIcon(j.console_id)} ${j.console_name}</td>
+      <td><span class="badge" style="background:rgba(0,212,255,0.1);color:var(--accent)">${j.output_fmt}</span></td>
+      <td>${statusBadge(j.status)}${j.note ? `<br><small style="color:var(--accent3);font-size:0.68rem">${j.note}</small>` : ''}</td>
+      <td>${progressCell(j)}</td>
+      <td style="color:var(--text3);font-size:0.76rem;white-space:nowrap">${(j.created||'').substring(0,19)}</td>
+      <td style="white-space:nowrap">
+        ${j.status === 'error' ? `<button class="btn btn-warning btn-xs" onclick="retryJob('${j.id}')">↩ Retry</button>` : ''}
+        ${j.status === 'pending' ? `<button class="btn btn-danger btn-xs" onclick="cancelJob('${j.id}')">✕</button>` : ''}
+      </td>
+    </tr>`).join('') +
+    `</tbody></table>`;
+}
+
+async function renderQueue() {
+  await fetchQueue();
+  renderQueueTable(queueData, document.getElementById('queue-table-wrap'), 'Queue is empty');
+  const all = [...queueData, ...historyData].slice(0, 8);
+  const ra  = document.getElementById('recent-activity');
+  if (!all.length) { ra.innerHTML = '<div class="empty-state"><div class="icon">🎮</div><p>No recent activity</p></div>'; return; }
+  renderQueueTable(all, ra, 'No recent activity');
+}
+
+async function renderHistory() {
+  await fetchQueue();
+  renderQueueTable(historyData, document.getElementById('history-table-wrap'), 'No history yet');
+}
+
+async function retryJob(id) {
+  await apiFetch(`/api/job/${id}/retry`, {method:'POST'});
+  toast('Job re-queued', 'success');
+}
+async function cancelJob(id) {
+  await apiFetch(`/api/job/${id}/cancel`, {method:'POST'});
+  toast('Job cancelled', 'info');
+}
+async function clearQueue() {
+  if (!confirm('Clear all pending jobs?')) return;
+  await apiFetch('/api/queue/clear', {method:'POST'});
+  toast('Queue cleared', 'info'); renderQueue();
+}
+
+// ── Logs ──────────────────────────────────────────────────────────────────────
+async function loadLogs() {
+  const lines = await apiFetch('/api/logs?n=300');
+  const el    = document.getElementById('log-terminal');
+  el.innerHTML = lines.map(l => {
+    let cls = '';
+    if (l.includes('✅')) cls = 'done';
+    else if (l.includes('❌') || l.includes('Error')) cls = 'error';
+    else if (l.includes('👁')) cls = 'watching';
+    else if (l.includes('📥')) cls = 'queued';
+    else if (l.includes('⏭')) cls = 'skipped';
+    else if (l.includes('🔸') || l.includes('Simulated')) cls = 'simulated';
+    else if (l.includes('📦') || l.includes('Extracting') || l.includes('Extracted')) cls = 'extract';
+    return `<div class="log-line ${cls}">${l.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
+  }).join('');
+  if (document.getElementById('auto-scroll-chk').checked) el.scrollTop = el.scrollHeight;
+}
+
+// ── Settings ──────────────────────────────────────────────────────────────────
+async function loadSettings() {
+  cfg = await apiFetch('/api/config');
+  document.getElementById('s-watch-dir').value          = cfg.watch_dir || '';
+  document.getElementById('s-delete-originals').checked = cfg.delete_originals;
+  document.getElementById('s-parallel-jobs').value      = cfg.parallel_jobs || 1;
+}
+async function saveSettings() {
+  cfg.watch_dir        = document.getElementById('s-watch-dir').value.trim();
+  cfg.delete_originals = document.getElementById('s-delete-originals').checked;
+  cfg.parallel_jobs    = parseInt(document.getElementById('s-parallel-jobs').value) || 1;
+  await apiFetch('/api/config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(cfg) });
+  toast('Settings saved', 'success'); pollStatus();
+}
+async function saveAndStartWatcher() { await saveSettings(); await startWatcher(); }
+async function startWatcher() { await apiFetch('/api/watcher/start', {method:'POST'}); toast('Watcher started', 'success'); pollStatus(); }
+async function stopWatcher()  { await apiFetch('/api/watcher/stop',  {method:'POST'}); toast('Watcher stopped', 'info');   pollStatus(); }
+async function scanNow() {
+  const r = await apiFetch('/api/scan', {method:'POST'});
+  if (r.error) toast(r.error, 'error'); else toast('Scan started…', 'info');
+}
+
+// ── Console config ────────────────────────────────────────────────────────────
+async function renderConsoles() {
+  cfg = await apiFetch('/api/config');
+  const grid = document.getElementById('console-grid');
+  grid.innerHTML = '';
+  for (const [cid, cons] of Object.entries(cfg.consoles)) {
+    grid.appendChild(buildConsoleCard(cid, cons));
+  }
+}
+
+function buildConsoleCard(cid, cons) {
+  const fmtOptions = Object.entries(OUTPUT_FORMATS)
+    .map(([k,v]) => `<option value="${k}" ${cons.output_format===k?'selected':''}>${k.toUpperCase()} — ${v.label}</option>`)
+    .join('');
+  const tools = OUTPUT_FORMATS[cons.output_format]?.tools || [];
+  const toolOptions = tools.map(t => `<option value="${t}" ${cons.tool===t?'selected':''}>${t}</option>`).join('');
+  const div = document.createElement('div');
+  div.className = 'console-card' + (cons.enabled ? ' enabled' : '');
+  div.id = 'card-' + cid;
+  div.innerHTML = `
+    <div class="console-card-header">
+      <span style="font-size:1.3rem">${consoleIcon(cid)}</span>
+      <span class="name">${cons.name}</span>
+      <label class="toggle"><input type="checkbox" ${cons.enabled?'checked':''} onchange="toggleConsole('${cid}',this.checked)"><span class="slider"></span></label>
+    </div>
+    <div class="console-card-body">
+      <div class="field-row"><label>Folder name</label><input type="text" id="c-${cid}-folder" value="${cons.folder}"></div>
+      <div class="field-row"><label>Output format</label><select id="c-${cid}-format" onchange="updateToolOptions('${cid}')">${fmtOptions}</select></div>
+      <div class="field-row"><label>Tool</label><select id="c-${cid}-tool">${toolOptions || `<option value="${cons.tool}">${cons.tool}</option>`}</select></div>
+      <div class="field-row"><label>Input exts</label><input type="text" id="c-${cid}-inputs" value="${cons.input_formats.join(', ')}" placeholder=".bin, .cue, .iso, .7z, .zip, .rar"></div>
+    </div>`;
+  return div;
+}
+
+function consoleIcon(cid) {
+  const icons = {
+    ps1:'🎮', ps2:'🎮', psp:'📱', saturn:'🪐', dreamcast:'💿',
+    gamecube:'🐬', wii:'🕹', nes:'🕹', snes:'🕹', gba:'📟',
+    nds:'📺', n64:'🎯', arcade:'🕹', '3ds':'👾',
+    xbox_og:'🟩', xbox_360:'🟩'
+  };
+  return icons[cid] || '🎮';
+}
+
+function toggleConsole(cid, enabled) {
+  const card = document.getElementById('card-' + cid);
+  if (enabled) card.classList.add('enabled'); else card.classList.remove('enabled');
+}
+
+function updateToolOptions(cid) {
+  const fmt   = document.getElementById(`c-${cid}-format`).value;
+  const tools = OUTPUT_FORMATS[fmt]?.tools || [];
+  const sel   = document.getElementById(`c-${cid}-tool`);
+  sel.innerHTML = tools.map(t => `<option value="${t}">${t}</option>`).join('') || '<option value="none">none</option>';
+}
+
+async function saveConsoles() {
+  cfg = await apiFetch('/api/config');
+  for (const cid of Object.keys(cfg.consoles)) {
+    const folderEl  = document.getElementById(`c-${cid}-folder`);
+    const formatEl  = document.getElementById(`c-${cid}-format`);
+    const toolEl    = document.getElementById(`c-${cid}-tool`);
+    const inputsEl  = document.getElementById(`c-${cid}-inputs`);
+    const enabledEl = document.querySelector(`#card-${cid} input[type=checkbox]`);
+    if (!folderEl) continue;
+    cfg.consoles[cid].folder        = folderEl.value.trim();
+    cfg.consoles[cid].output_format = formatEl.value;
+    cfg.consoles[cid].tool          = toolEl.value;
+    cfg.consoles[cid].input_formats = inputsEl.value.split(',').map(s=>s.trim()).filter(Boolean);
+    cfg.consoles[cid].enabled       = enabledEl?.checked ?? cfg.consoles[cid].enabled;
+  }
+  await apiFetch('/api/config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(cfg) });
+  toast('Console rules saved', 'success');
+}
+
+async function addCustomConsole() {
+  const id = 'custom_' + Date.now();
+  cfg = await apiFetch('/api/config');
+  cfg.consoles[id] = { name:'New Console', enabled:false, folder:'NewConsole', input_formats:['.iso','.7z','.zip','.rar'], output_format:'7z', tool:'7z', options:{} };
+  await apiFetch('/api/config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(cfg) });
+  renderConsoles();
+  toast('New console added — scroll down', 'info');
+}
+
+loadSettings();
+renderQueue();
+</script>
+</body>
+</html>
