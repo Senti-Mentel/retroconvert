@@ -201,6 +201,17 @@ tr:hover td { background: rgba(0,212,255,0.02); }
 ::-webkit-scrollbar-track { background: var(--bg2); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+/* ── Tool pages shared ── */
+.drag-over { border-color: var(--accent) !important; background: rgba(0,212,255,0.05) !important; }
+.hash-row { display:flex; align-items:center; gap:12px; background:var(--bg3); border:1px solid var(--border); border-radius:6px; padding:10px 14px; }
+.hash-row .hash-label { font-size:0.72rem; color:var(--text3); text-transform:uppercase; letter-spacing:1px; width:60px; flex-shrink:0; }
+.hash-row .hash-value { font-family:var(--font-mono); font-size:0.82rem; color:var(--accent); flex:1; word-break:break-all; }
+.hash-row .copy-btn { flex-shrink:0; }
+.cue-track-row { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); }
+.cue-track-row:last-child { border-bottom:none; }
+.cue-track-num { font-family:var(--font-mono); font-size:0.78rem; color:var(--text3); width:20px; }
+.cue-track-name { font-family:var(--font-mono); font-size:0.82rem; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 </style>
 </head>
 <body>
@@ -223,6 +234,12 @@ tr:hover td { background: rgba(0,212,255,0.02); }
     <div class="nav-item" data-page="queue"><span class="icon">⏳</span> Queue <span class="badge" id="nav-queue-badge" style="display:none">0</span></div>
     <div class="nav-item" data-page="history"><span class="icon">📋</span> History</div>
     <div class="nav-item" data-page="logs"><span class="icon">🖥</span> Logs</div>
+    <div class="nav-divider"></div>
+    <div class="nav-label">Tools</div>
+    <div class="nav-item" data-page="cue-gen"><span class="icon">📀</span> CUE Generator</div>
+    <div class="nav-item" data-page="n64-swap"><span class="icon">🔄</span> N64 Swapper</div>
+    <div class="nav-item" data-page="hash-check"><span class="icon">🔍</span> Hash Checker</div>
+    <div class="nav-item" data-page="rom-patch"><span class="icon">🩹</span> ROM Patcher</div>
     <div class="nav-divider"></div>
     <div class="nav-label">Config</div>
     <div class="nav-item" data-page="settings"><span class="icon">⚙️</span> General Settings</div>
@@ -372,6 +389,178 @@ tr:hover td { background: rgba(0,212,255,0.02); }
       <div class="console-grid" id="console-grid"></div>
     </div>
 
+
+    <!-- ── CUE Generator ── -->
+    <div class="page" id="page-cue-gen">
+      <div class="page-header">
+        <div><h1>CUE Generator</h1><p>Drop .bin files to generate a .cue sheet</p></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="icon">📀</span> Drop BIN Files</div>
+        <div class="card-body">
+          <div id="cue-dropzone" style="border:2px dashed var(--border);border-radius:8px;padding:40px;text-align:center;cursor:pointer;transition:border-color 0.2s;background:var(--bg3)">
+            <div style="font-size:2.5rem;margin-bottom:10px">📀</div>
+            <div style="color:var(--text2);font-size:0.9rem">Drag and drop one or more <code style=color:var(--accent)>.bin</code> files here</div>
+            <div style="color:var(--text3);font-size:0.78rem;margin-top:6px">Single file = single track. Multiple files = multi-track (first track DATA, rest AUDIO)</div>
+            <input type="file" id="cue-file-input" accept=".bin" multiple style="display:none">
+            <button class="btn btn-secondary btn-sm" style="margin-top:14px" onclick="document.getElementById('cue-file-input').click()">Browse Files</button>
+          </div>
+          <div id="cue-track-list" style="margin-top:16px;display:none">
+            <div style="font-size:0.85rem;font-weight:700;margin-bottom:10px;color:var(--text2)">Track List</div>
+            <div id="cue-tracks"></div>
+            <div style="margin-top:16px;display:flex;gap:10px;align-items:center">
+              <div class="form-group" style="max-width:300px">
+                <label>Output filename</label>
+                <input type="text" id="cue-filename" placeholder="Game Name.cue">
+              </div>
+            </div>
+            <div style="margin-top:14px;display:flex;gap:10px">
+              <button class="btn btn-primary" onclick="generateCue()">💾 Download .cue</button>
+              <button class="btn btn-secondary" onclick="resetCue()">✕ Clear</button>
+            </div>
+          </div>
+          <div id="cue-preview" style="margin-top:16px;display:none">
+            <div style="font-size:0.85rem;font-weight:700;margin-bottom:8px;color:var(--text2)">Preview</div>
+            <pre id="cue-preview-text" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:14px;font-family:var(--font-mono);font-size:0.78rem;color:var(--accent);overflow-x:auto"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── N64 Swapper ── -->
+    <div class="page" id="page-n64-swap">
+      <div class="page-header">
+        <div><h1>N64 Byte Swapper</h1><p>Convert between .z64, .v64, and .n64 formats</p></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="icon">🔄</span> Drop N64 ROM</div>
+        <div class="card-body">
+          <div id="n64-dropzone" style="border:2px dashed var(--border);border-radius:8px;padding:40px;text-align:center;cursor:pointer;transition:border-color 0.2s;background:var(--bg3)">
+            <div style="font-size:2.5rem;margin-bottom:10px">🎯</div>
+            <div style="color:var(--text2);font-size:0.9rem">Drag and drop a <code style=color:var(--accent)>.z64</code>, <code style=color:var(--accent)>.v64</code>, or <code style=color:var(--accent)>.n64</code> ROM here</div>
+            <input type="file" id="n64-file-input" accept=".z64,.v64,.n64" style="display:none">
+            <button class="btn btn-secondary btn-sm" style="margin-top:14px" onclick="document.getElementById('n64-file-input').click()">Browse Files</button>
+          </div>
+          <div id="n64-info" style="margin-top:16px;display:none">
+            <div class="card" style="margin-bottom:0">
+              <div class="card-body">
+                <div style="display:flex;gap:24px;flex-wrap:wrap">
+                  <div><div style="font-size:0.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px">File</div><div id="n64-fname" style="font-family:var(--font-mono);font-size:0.85rem;margin-top:4px"></div></div>
+                  <div><div style="font-size:0.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px">Detected Format</div><div id="n64-detected" style="font-family:var(--font-mono);font-size:0.85rem;margin-top:4px;color:var(--accent)"></div></div>
+                  <div><div style="font-size:0.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px">Header Bytes</div><div id="n64-header" style="font-family:var(--font-mono);font-size:0.85rem;margin-top:4px;color:var(--text3)"></div></div>
+                </div>
+                <div style="margin-top:16px">
+                  <div style="font-size:0.78rem;color:var(--text2);font-weight:600;margin-bottom:8px">Convert to:</div>
+                  <div style="display:flex;gap:10px;flex-wrap:wrap">
+                    <button class="btn btn-primary" id="n64-to-z64" onclick="convertN64('z64')">→ .z64 (Big Endian)</button>
+                    <button class="btn btn-secondary" id="n64-to-v64" onclick="convertN64('v64')">→ .v64 (Byte Swapped)</button>
+                    <button class="btn btn-secondary" id="n64-to-n64" onclick="convertN64('n64')">→ .n64 (Little Endian)</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="icon">ℹ️</span> Format Reference</div>
+        <div class="card-body">
+          <table><thead><tr><th>Format</th><th>Extension</th><th>Header Bytes</th><th>Byte Order</th></tr></thead>
+          <tbody>
+            <tr><td>.z64</td><td style="font-family:var(--font-mono);color:var(--accent)">.z64</td><td style="font-family:var(--font-mono)">80 37 12 40</td><td>Big Endian (native)</td></tr>
+            <tr><td>.v64</td><td style="font-family:var(--font-mono);color:var(--accent)">.v64</td><td style="font-family:var(--font-mono)">37 80 40 12</td><td>Byte Swapped</td></tr>
+            <tr><td>.n64</td><td style="font-family:var(--font-mono);color:var(--accent)">.n64</td><td style="font-family:var(--font-mono)">40 12 37 80</td><td>Little Endian</td></tr>
+          </tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Hash Checker ── -->
+    <div class="page" id="page-hash-check">
+      <div class="page-header">
+        <div><h1>Hash Checker</h1><p>Calculate MD5, SHA1, SHA256 and CRC32 for any file</p></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="icon">🔍</span> Drop File</div>
+        <div class="card-body">
+          <div id="hash-dropzone" style="border:2px dashed var(--border);border-radius:8px;padding:40px;text-align:center;cursor:pointer;transition:border-color 0.2s;background:var(--bg3)">
+            <div style="font-size:2.5rem;margin-bottom:10px">🔍</div>
+            <div style="color:var(--text2);font-size:0.9rem">Drag and drop any ROM file here</div>
+            <div style="color:var(--text3);font-size:0.78rem;margin-top:6px">Processed entirely in your browser — file is never uploaded</div>
+            <input type="file" id="hash-file-input" style="display:none">
+            <button class="btn btn-secondary btn-sm" style="margin-top:14px" onclick="document.getElementById('hash-file-input').click()">Browse Files</button>
+          </div>
+          <div id="hash-progress" style="margin-top:16px;display:none">
+            <div style="font-size:0.85rem;color:var(--text2);margin-bottom:8px" id="hash-progress-label">Calculating…</div>
+            <div style="height:4px;background:var(--bg3);border-radius:2px;overflow:hidden">
+              <div id="hash-progress-bar" style="height:100%;background:linear-gradient(90deg,var(--accent),var(--accent3));width:0%;transition:width 0.3s"></div>
+            </div>
+          </div>
+          <div id="hash-results" style="margin-top:16px;display:none">
+            <div style="font-size:0.85rem;font-weight:700;margin-bottom:12px;color:var(--text2)" id="hash-filename"></div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div class="hash-row" id="hash-crc32"></div>
+              <div class="hash-row" id="hash-md5"></div>
+              <div class="hash-row" id="hash-sha1"></div>
+              <div class="hash-row" id="hash-sha256"></div>
+            </div>
+            <div style="margin-top:16px;display:flex;gap:10px">
+              <a id="hash-nointro-link" href="#" target="_blank" class="btn btn-secondary btn-sm">🔎 Search No-Intro</a>
+              <a id="hash-redump-link" href="#" target="_blank" class="btn btn-secondary btn-sm">🔎 Search Redump</a>
+              <button class="btn btn-secondary btn-sm" onclick="resetHash()">✕ Clear</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ROM Patcher ── -->
+    <div class="page" id="page-rom-patch">
+      <div class="page-header">
+        <div><h1>ROM Patcher</h1><p>Apply IPS, BPS, or UPS patches to any ROM</p></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="icon">🩹</span> Files</div>
+        <div class="card-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div>
+              <div style="font-size:0.78rem;color:var(--text2);font-weight:600;margin-bottom:8px">1. ROM File</div>
+              <div id="patch-rom-dropzone" class="patch-drop" ondrop="patchDrop(event,'rom')" ondragover="event.preventDefault()" ondragleave="this.classList.remove('drag-over')" ondragenter="this.classList.add('drag-over')" onclick="document.getElementById('patch-rom-input').click()" style="border:2px dashed var(--border);border-radius:8px;padding:24px;text-align:center;cursor:pointer;background:var(--bg3);min-height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px">
+                <div style="font-size:1.8rem">🎮</div>
+                <div id="patch-rom-label" style="font-size:0.82rem;color:var(--text3)">Drop ROM here</div>
+                <input type="file" id="patch-rom-input" style="display:none" onchange="patchFileSet(this.files[0],'rom')">
+              </div>
+            </div>
+            <div>
+              <div style="font-size:0.78rem;color:var(--text2);font-weight:600;margin-bottom:8px">2. Patch File</div>
+              <div id="patch-patch-dropzone" class="patch-drop" ondrop="patchDrop(event,'patch')" ondragover="event.preventDefault()" ondragleave="this.classList.remove('drag-over')" ondragenter="this.classList.add('drag-over')" onclick="document.getElementById('patch-patch-input').click()" style="border:2px dashed var(--border);border-radius:8px;padding:24px;text-align:center;cursor:pointer;background:var(--bg3);min-height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px">
+                <div style="font-size:1.8rem">🩹</div>
+                <div id="patch-patch-label" style="font-size:0.82rem;color:var(--text3)">Drop .ips / .bps / .ups patch here</div>
+                <input type="file" id="patch-patch-input" style="display:none" accept=".ips,.bps,.ups" onchange="patchFileSet(this.files[0],'patch')">
+              </div>
+            </div>
+          </div>
+          <div id="patch-status" style="margin-top:14px;display:none">
+            <div id="patch-status-text" style="font-size:0.85rem;color:var(--text2)"></div>
+          </div>
+          <div style="margin-top:16px;display:flex;gap:10px">
+            <button class="btn btn-primary" onclick="applyPatch()" id="patch-apply-btn" disabled>🩹 Apply Patch & Download</button>
+            <button class="btn btn-secondary" onclick="resetPatch()">✕ Clear</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="icon">ℹ️</span> Supported Patch Formats</div>
+        <div class="card-body">
+          <table><thead><tr><th>Format</th><th>Extension</th><th>Common Use</th></tr></thead>
+          <tbody>
+            <tr><td>IPS</td><td style="font-family:var(--font-mono);color:var(--accent)">.ips</td><td>Classic format, most retro patches (SNES, NES, GBA)</td></tr>
+            <tr><td>BPS</td><td style="font-family:var(--font-mono);color:var(--accent)">.bps</td><td>Modern format, supports larger ROMs (SNES, N64)</td></tr>
+            <tr><td>UPS</td><td style="font-family:var(--font-mono);color:var(--accent)">.ups</td><td>Older universal format</td></tr>
+          </tbody></table>
+        </div>
+      </div>
+    </div>
   </main>
 </div>
 
@@ -691,6 +880,416 @@ async function addCustomConsole() {
 
 loadSettings();
 renderQueue();
+
+// ════════════════════════════════════════════════════════════════════════════
+// CUE GENERATOR
+// ════════════════════════════════════════════════════════════════════════════
+let cueFiles = [];
+
+function setupCueDrop() {
+  const dz = document.getElementById('cue-dropzone');
+  dz.addEventListener('dragover',  e => { e.preventDefault(); dz.style.borderColor = 'var(--accent)'; });
+  dz.addEventListener('dragleave', e => { dz.style.borderColor = 'var(--border)'; });
+  dz.addEventListener('drop', e => {
+    e.preventDefault(); dz.style.borderColor = 'var(--border)';
+    handleCueFiles([...e.dataTransfer.files]);
+  });
+  document.getElementById('cue-file-input').addEventListener('change', e => handleCueFiles([...e.target.files]));
+}
+
+function handleCueFiles(files) {
+  cueFiles = files.filter(f => f.name.toLowerCase().endsWith('.bin'))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  if (!cueFiles.length) { toast('No .bin files found', 'error'); return; }
+
+  // Auto filename: strip disc tags from first file
+  let baseName = cueFiles[0].name.replace(/\.bin$/i, '').replace(/\s*[\(\[]?(disc|disk|cd|side)\s*[0-9a-z]+[\)\]]?/gi, '').trim();
+  document.getElementById('cue-filename').value = baseName + '.cue';
+
+  // Render track list
+  const trackDiv = document.getElementById('cue-tracks');
+  trackDiv.innerHTML = cueFiles.map((f, i) => {
+    const type = i === 0 ? 'MODE2/2352' : 'AUDIO';
+    const typeColor = i === 0 ? 'var(--accent)' : 'var(--yellow)';
+    return '<div class="cue-track-row">' +
+      '<span class="cue-track-num">' + String(i+1).padStart(2,'0') + '</span>' +
+      '<span class="cue-track-name">' + f.name + '</span>' +
+      '<span style="font-family:var(--font-mono);font-size:0.75rem;color:' + typeColor + ';flex-shrink:0">' + type + '</span>' +
+      '<span style="font-size:0.72rem;color:var(--text3);flex-shrink:0">' + (f.size/1024/1024).toFixed(1) + ' MB</span>' +
+      '</div>';
+  }).join('');
+
+  document.getElementById('cue-track-list').style.display = 'block';
+  updateCuePreview();
+}
+
+function buildCueContent() {
+  const outName = document.getElementById('cue-filename').value || 'game.cue';
+  let lines = [];
+  cueFiles.forEach((f, i) => {
+    lines.push('FILE "' + f.name + '" BINARY');
+    if (i === 0) {
+      lines.push('  TRACK 01 MODE2/2352');
+      lines.push('    INDEX 01 00:00:00');
+    } else {
+      const n = String(i+1).padStart(2,'0');
+      lines.push('  TRACK ' + n + ' AUDIO');
+      lines.push('    INDEX 01 00:00:00');
+    }
+  });
+  return lines.join('
+');
+}
+
+function updateCuePreview() {
+  const preview = document.getElementById('cue-preview');
+  document.getElementById('cue-preview-text').textContent = buildCueContent();
+  preview.style.display = 'block';
+}
+
+function generateCue() {
+  const content = buildCueContent();
+  const fname   = document.getElementById('cue-filename').value || 'game.cue';
+  const blob    = new Blob([content], { type: 'text/plain' });
+  const a       = document.createElement('a');
+  a.href        = URL.createObjectURL(blob);
+  a.download    = fname;
+  a.click();
+  toast('Downloaded ' + fname, 'success');
+}
+
+function resetCue() {
+  cueFiles = [];
+  document.getElementById('cue-track-list').style.display  = 'none';
+  document.getElementById('cue-preview').style.display     = 'none';
+  document.getElementById('cue-file-input').value          = '';
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// N64 BYTE SWAPPER
+// ════════════════════════════════════════════════════════════════════════════
+let n64FileData = null, n64FileName = '';
+
+const N64_FORMATS = {
+  z64: { header: [0x80, 0x37, 0x12, 0x40], label: '.z64 (Big Endian)' },
+  v64: { header: [0x37, 0x80, 0x40, 0x12], label: '.v64 (Byte Swapped)' },
+  n64: { header: [0x40, 0x12, 0x37, 0x80], label: '.n64 (Little Endian)' },
+};
+
+function setupN64Drop() {
+  const dz = document.getElementById('n64-dropzone');
+  dz.addEventListener('dragover',  e => { e.preventDefault(); dz.style.borderColor = 'var(--accent)'; });
+  dz.addEventListener('dragleave', e => { dz.style.borderColor = 'var(--border)'; });
+  dz.addEventListener('drop', e => {
+    e.preventDefault(); dz.style.borderColor = 'var(--border)';
+    if (e.dataTransfer.files[0]) loadN64File(e.dataTransfer.files[0]);
+  });
+  document.getElementById('n64-file-input').addEventListener('change', e => {
+    if (e.target.files[0]) loadN64File(e.target.files[0]);
+  });
+}
+
+function loadN64File(file) {
+  n64FileName = file.name;
+  const reader = new FileReader();
+  reader.onload = e => {
+    n64FileData = new Uint8Array(e.target.result);
+    const b = n64FileData;
+    let detected = 'unknown';
+    for (const [fmt, info] of Object.entries(N64_FORMATS)) {
+      if (b[0]===info.header[0] && b[1]===info.header[1] && b[2]===info.header[2] && b[3]===info.header[3]) {
+        detected = fmt; break;
+      }
+    }
+    document.getElementById('n64-fname').textContent     = file.name;
+    document.getElementById('n64-detected').textContent  = N64_FORMATS[detected]?.label || 'Unknown';
+    document.getElementById('n64-header').textContent    = Array.from(b.slice(0,4)).map(x=>x.toString(16).padStart(2,'0').toUpperCase()).join(' ');
+    document.getElementById('n64-info').style.display    = 'block';
+    // Highlight current format button
+    ['z64','v64','n64'].forEach(f => {
+      const btn = document.getElementById('n64-to-' + f);
+      btn.className = f === detected ? 'btn btn-secondary btn-sm' : 'btn btn-primary btn-sm';
+      btn.disabled  = f === detected;
+    });
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function toZ64(data) {
+  // Detect source and convert to z64
+  const b = data;
+  if (b[0]===0x80) return new Uint8Array(data); // already z64
+  const out = new Uint8Array(data.length);
+  if (b[0]===0x37) { // v64: swap each pair of bytes
+    for (let i=0;i<data.length;i+=2) { out[i]=data[i+1]; out[i+1]=data[i]; }
+  } else if (b[0]===0x40) { // n64: reverse each group of 4
+    for (let i=0;i<data.length;i+=4) { out[i]=data[i+3]; out[i+1]=data[i+2]; out[i+2]=data[i+1]; out[i+3]=data[i]; }
+  }
+  return out;
+}
+
+function convertN64(targetFmt) {
+  if (!n64FileData) return;
+  let z64 = toZ64(n64FileData);
+  let out;
+  if (targetFmt === 'z64') {
+    out = z64;
+  } else if (targetFmt === 'v64') {
+    out = new Uint8Array(z64.length);
+    for (let i=0;i<z64.length;i+=2) { out[i]=z64[i+1]; out[i+1]=z64[i]; }
+  } else { // n64
+    out = new Uint8Array(z64.length);
+    for (let i=0;i<z64.length;i+=4) { out[i]=z64[i+3]; out[i+1]=z64[i+2]; out[i+2]=z64[i+1]; out[i+3]=z64[i]; }
+  }
+  const baseName = n64FileName.replace(/\.(z64|v64|n64)$/i, '');
+  const outName  = baseName + '.' + targetFmt;
+  const blob     = new Blob([out], { type: 'application/octet-stream' });
+  const a        = document.createElement('a');
+  a.href         = URL.createObjectURL(blob);
+  a.download     = outName;
+  a.click();
+  toast('Downloaded ' + outName, 'success');
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// HASH CHECKER
+// ════════════════════════════════════════════════════════════════════════════
+function setupHashDrop() {
+  const dz = document.getElementById('hash-dropzone');
+  dz.addEventListener('dragover',  e => { e.preventDefault(); dz.style.borderColor = 'var(--accent)'; });
+  dz.addEventListener('dragleave', e => { dz.style.borderColor = 'var(--border)'; });
+  dz.addEventListener('drop', e => {
+    e.preventDefault(); dz.style.borderColor = 'var(--border)';
+    if (e.dataTransfer.files[0]) hashFile(e.dataTransfer.files[0]);
+  });
+  document.getElementById('hash-file-input').addEventListener('change', e => {
+    if (e.target.files[0]) hashFile(e.target.files[0]);
+  });
+}
+
+function crc32(buf) {
+  const table = new Uint32Array(256);
+  for (let i=0;i<256;i++) {
+    let c=i;
+    for (let j=0;j<8;j++) c = (c&1) ? (0xEDB88320^(c>>>1)) : (c>>>1);
+    table[i]=c;
+  }
+  let crc=0xFFFFFFFF;
+  for (let i=0;i<buf.length;i++) crc = table[(crc^buf[i])&0xFF]^(crc>>>8);
+  return ((crc^0xFFFFFFFF)>>>0).toString(16).toUpperCase().padStart(8,'0');
+}
+
+async function hashFile(file) {
+  document.getElementById('hash-dropzone').style.display   = 'none';
+  document.getElementById('hash-progress').style.display   = 'block';
+  document.getElementById('hash-results').style.display    = 'none';
+  document.getElementById('hash-progress-label').textContent = 'Reading ' + file.name + '…';
+  document.getElementById('hash-progress-bar').style.width  = '20%';
+
+  const buf  = await file.arrayBuffer();
+  const data = new Uint8Array(buf);
+  document.getElementById('hash-progress-bar').style.width = '40%';
+
+  const crc  = crc32(data);
+  document.getElementById('hash-progress-bar').style.width = '55%';
+
+  const md5hash    = await crypto.subtle.digest('MD5', buf).catch(()=>null);
+  document.getElementById('hash-progress-bar').style.width = '65%';
+  const sha1hash   = await crypto.subtle.digest('SHA-1', buf);
+  document.getElementById('hash-progress-bar').style.width = '80%';
+  const sha256hash = await crypto.subtle.digest('SHA-256', buf);
+  document.getElementById('hash-progress-bar').style.width = '100%';
+
+  function hex(ab) { return ab ? [...new Uint8Array(ab)].map(b=>b.toString(16).padStart(2,'0')).join('') : 'N/A (not supported in this browser)'; }
+
+  const sha1str   = hex(sha1hash);
+  const sha256str = hex(sha256hash);
+
+  function hashRow(id, label, value) {
+    document.getElementById(id).innerHTML =
+      '<span class="hash-label">' + label + '</span>' +
+      '<span class="hash-value">' + value + '</span>' +
+      '<button class="btn btn-secondary btn-xs copy-btn" onclick="navigator.clipboard.writeText('' + value + '');toast('' + label + ' copied','info')">Copy</button>';
+  }
+
+  hashRow('hash-crc32',  'CRC32',  crc);
+  hashRow('hash-md5',    'MD5',    hex(md5hash));
+  hashRow('hash-sha1',   'SHA1',   sha1str);
+  hashRow('hash-sha256', 'SHA256', sha256str);
+
+  document.getElementById('hash-filename').textContent = file.name + ' (' + (file.size/1024/1024).toFixed(2) + ' MB)';
+  document.getElementById('hash-nointro-link').href = 'https://datomatic.no-intro.org/?page=search&s=' + sha1str;
+  document.getElementById('hash-redump-link').href  = 'http://redump.org/discs/quicksearch/' + sha1str;
+
+  document.getElementById('hash-progress').style.display  = 'none';
+  document.getElementById('hash-results').style.display   = 'block';
+}
+
+function resetHash() {
+  document.getElementById('hash-dropzone').style.display  = 'block';
+  document.getElementById('hash-progress').style.display  = 'none';
+  document.getElementById('hash-results').style.display   = 'none';
+  document.getElementById('hash-file-input').value        = '';
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// ROM PATCHER
+// ════════════════════════════════════════════════════════════════════════════
+let patchRomFile = null, patchPatchFile = null;
+
+function setupPatchDrop() {
+  const romDz   = document.getElementById('patch-rom-dropzone');
+  const patchDz = document.getElementById('patch-patch-dropzone');
+  romDz.addEventListener('dragover',   e => { e.preventDefault(); romDz.style.borderColor   = 'var(--accent)'; });
+  romDz.addEventListener('dragleave',  e => { romDz.style.borderColor   = 'var(--border)'; });
+  romDz.addEventListener('drop',       e => { e.preventDefault(); romDz.style.borderColor   = 'var(--border)'; if(e.dataTransfer.files[0]) patchFileSet(e.dataTransfer.files[0],'rom'); });
+  patchDz.addEventListener('dragover', e => { e.preventDefault(); patchDz.style.borderColor = 'var(--accent)'; });
+  patchDz.addEventListener('dragleave',e => { patchDz.style.borderColor = 'var(--border)'; });
+  patchDz.addEventListener('drop',     e => { e.preventDefault(); patchDz.style.borderColor = 'var(--border)'; if(e.dataTransfer.files[0]) patchFileSet(e.dataTransfer.files[0],'patch'); });
+  document.getElementById('patch-rom-input').addEventListener('change',   e => { if(e.target.files[0]) patchFileSet(e.target.files[0],'rom'); });
+  document.getElementById('patch-patch-input').addEventListener('change', e => { if(e.target.files[0]) patchFileSet(e.target.files[0],'patch'); });
+}
+
+function patchDrop(e, type) { e.preventDefault(); if(e.dataTransfer.files[0]) patchFileSet(e.dataTransfer.files[0], type); }
+
+function patchFileSet(file, type) {
+  if (type === 'rom') {
+    patchRomFile = file;
+    document.getElementById('patch-rom-label').textContent    = file.name;
+    document.getElementById('patch-rom-label').style.color    = 'var(--green)';
+  } else {
+    patchPatchFile = file;
+    document.getElementById('patch-patch-label').textContent  = file.name;
+    document.getElementById('patch-patch-label').style.color  = 'var(--green)';
+  }
+  document.getElementById('patch-apply-btn').disabled = !(patchRomFile && patchPatchFile);
+  if (patchRomFile && patchPatchFile) {
+    const ext = patchPatchFile.name.split('.').pop().toLowerCase();
+    document.getElementById('patch-status').style.display     = 'block';
+    document.getElementById('patch-status-text').textContent  = 'Ready — detected ' + ext.toUpperCase() + ' patch format';
+    document.getElementById('patch-status-text').style.color  = 'var(--green)';
+  }
+}
+
+async function applyPatch() {
+  if (!patchRomFile || !patchPatchFile) return;
+  const romBuf   = await patchRomFile.arrayBuffer();
+  const patchBuf = await patchPatchFile.arrayBuffer();
+  const ext      = patchPatchFile.name.split('.').pop().toLowerCase();
+  let patched;
+  try {
+    if      (ext === 'ips') patched = applyIPS(new Uint8Array(romBuf), new Uint8Array(patchBuf));
+    else if (ext === 'bps') patched = applyBPS(new Uint8Array(romBuf), new Uint8Array(patchBuf));
+    else if (ext === 'ups') patched = applyUPS(new Uint8Array(romBuf), new Uint8Array(patchBuf));
+    else { toast('Unsupported patch format: ' + ext, 'error'); return; }
+  } catch(e) {
+    toast('Patch failed: ' + e.message, 'error'); return;
+  }
+  const baseName = patchRomFile.name.replace(/\.[^.]+$/, '');
+  const outExt   = patchRomFile.name.split('.').pop();
+  const outName  = baseName + ' (Patched).' + outExt;
+  const blob     = new Blob([patched], { type: 'application/octet-stream' });
+  const a        = document.createElement('a');
+  a.href         = URL.createObjectURL(blob);
+  a.download     = outName;
+  a.click();
+  toast('Patched ROM downloaded: ' + outName, 'success');
+}
+
+// IPS patcher
+function applyIPS(rom, patch) {
+  let i = 5; // skip PATCH header
+  const out = new Uint8Array(rom);
+  const grow = [];
+  while (i < patch.length - 3) {
+    if (patch[i]===0x45&&patch[i+1]===0x4F&&patch[i+2]===0x46) break; // EOF
+    const offset = (patch[i]<<16)|(patch[i+1]<<8)|patch[i+2]; i+=3;
+    const size   = (patch[i]<<8)|patch[i+1]; i+=2;
+    if (size === 0) { // RLE
+      const rleLen  = (patch[i]<<8)|patch[i+1]; i+=2;
+      const rleByte = patch[i++];
+      for (let j=0;j<rleLen;j++) grow.push({ offset:offset+j, byte:rleByte });
+    } else {
+      for (let j=0;j<size;j++) grow.push({ offset:offset+j, byte:patch[i++] });
+    }
+  }
+  const maxOff = grow.reduce((m,r) => Math.max(m, r.offset), out.length-1);
+  const result = new Uint8Array(Math.max(out.length, maxOff+1));
+  result.set(out);
+  grow.forEach(r => result[r.offset] = r.byte);
+  return result;
+}
+
+// BPS patcher
+function applyBPS(rom, patch) {
+  let i=4; // skip BPS1
+  function readVLQ() {
+    let v=0,s=0,b;
+    do { b=patch[i++]; v|=(b&0x7F)<<s; s+=7; } while(b&0x80);
+    return v;
+  }
+  const outSize  = readVLQ();
+  const out      = new Uint8Array(outSize);
+  readVLQ(); // source size
+  readVLQ(); // source checksum
+  let srcOff=0, dstOff=0, outPos=0;
+  while (outPos < outSize) {
+    const data = readVLQ();
+    const cmd  = data & 3;
+    const len  = (data >> 2) + 1;
+    if (cmd === 0) { for(let j=0;j<len;j++) out[outPos++]=rom[srcOff++]; }
+    else if (cmd === 1) { for(let j=0;j<len;j++) out[outPos++]=patch[i++]; }
+    else if (cmd === 2) {
+      const delta = readVLQ();
+      srcOff += (delta&1) ? -(delta>>1) : (delta>>1);
+      for(let j=0;j<len;j++) out[outPos++]=rom[srcOff++];
+    } else {
+      const delta = readVLQ();
+      dstOff += (delta&1) ? -(delta>>1) : (delta>>1);
+      for(let j=0;j<len;j++) { out[outPos]=out[dstOff++]; outPos++; }
+    }
+  }
+  return out;
+}
+
+// UPS patcher
+function applyUPS(rom, patch) {
+  let i=4; // skip UPS1
+  function readVLQ() {
+    let v=0,s=0,b;
+    do { b=patch[i++]; if(b===0xFF){v+=(0x7E)<<s;s+=7;} else{v|=(b&0x7F)<<s;break;} } while(true);
+    return v;
+  }
+  const srcSize = readVLQ();
+  const dstSize = readVLQ();
+  const out     = new Uint8Array(dstSize);
+  out.set(rom.slice(0, Math.min(rom.length, dstSize)));
+  let pos=0;
+  while (i < patch.length - 12) {
+    pos += readVLQ();
+    while (patch[i] !== 0) { out[pos] = (pos<rom.length?rom[pos]:0) ^ patch[i++]; pos++; }
+    i++; pos++;
+  }
+  return out;
+}
+
+function resetPatch() {
+  patchRomFile = null; patchPatchFile = null;
+  document.getElementById('patch-rom-label').textContent    = 'Drop ROM here';
+  document.getElementById('patch-rom-label').style.color    = 'var(--text3)';
+  document.getElementById('patch-patch-label').textContent  = 'Drop .ips / .bps / .ups patch here';
+  document.getElementById('patch-patch-label').style.color  = 'var(--text3)';
+  document.getElementById('patch-apply-btn').disabled       = true;
+  document.getElementById('patch-status').style.display     = 'none';
+  document.getElementById('patch-rom-input').value          = '';
+  document.getElementById('patch-patch-input').value        = '';
+}
+
+// ── Init all tools ────────────────────────────────────────────────────────────
+setupCueDrop();
+setupN64Drop();
+setupHashDrop();
+setupPatchDrop();
 </script>
 </body>
 </html>
