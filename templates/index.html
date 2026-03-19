@@ -217,7 +217,7 @@ tr:hover td { background: rgba(0,212,255,0.02); }
     <div class="nav-item" data-page="logs"><span class="icon">🖥</span> Logs</div>
     <div class="nav-divider"></div>
     <div class="nav-label">Tools</div>
-    <div class="nav-item" data-page="cue-gen"><span class="icon">📀</span> CUE Generator</div>
+    <div class="nav-item" data-page="cue-gen"><span class="icon">📀</span> CUE / M3U Generator</div>
     <div class="nav-item" data-page="n64-swap"><span class="icon">🔄</span> N64 Swapper</div>
     <div class="nav-item" data-page="hash-check"><span class="icon">🔍</span> Hash Checker</div>
     <div class="nav-item" data-page="rom-patch"><span class="icon">🩹</span> ROM Patcher</div>
@@ -359,17 +359,17 @@ tr:hover td { background: rgba(0,212,255,0.02); }
     <!-- CUE Generator -->
     <div class="page" id="page-cue-gen">
       <div class="page-header">
-        <div><h1>CUE Generator</h1><p>Drop .bin files to generate a .cue sheet</p></div>
+        <div><h1>CUE / M3U Generator</h1><p>Drop .bin files to generate a .cue sheet, or drop .chd files to generate an .m3u playlist</p></div>
       </div>
       <div class="card">
         <div class="card-header"><span class="icon">📀</span> Drop BIN Files</div>
         <div class="card-body">
           <div id="cue-dropzone" class="dropzone" onclick="document.getElementById('cue-file-input').click()">
             <div class="dz-icon">📀</div>
-            <div class="dz-hint">Drag and drop one or more <code style="color:var(--accent)">.bin</code> files here</div>
-            <div class="dz-sub">Single file = single track &nbsp;|&nbsp; Multiple files = multi-track (first DATA, rest AUDIO)</div>
+            <div class="dz-hint">Drop <code style="color:var(--accent)">.bin</code> files to generate a <code style="color:var(--accent2)">.cue</code> &nbsp;|&nbsp; Drop <code style="color:var(--accent)">.chd</code> files to generate an <code style="color:var(--accent2)">.m3u</code></div>
+            <div class="dz-sub">BIN: single file = single track, multiple = multi-track &nbsp;|&nbsp; CHD: any number generates one .m3u playlist</div>
             <button class="btn btn-secondary btn-sm" style="margin-top:14px" onclick="event.stopPropagation();document.getElementById('cue-file-input').click()">Browse Files</button>
-            <input type="file" id="cue-file-input" accept=".bin" multiple style="display:none">
+            <input type="file" id="cue-file-input" accept=".bin,.chd" multiple style="display:none">
           </div>
           <div id="cue-track-list" style="display:none;margin-top:16px;">
             <div style="font-size:0.85rem;font-weight:700;margin-bottom:10px;color:var(--text2)">Track List</div>
@@ -379,7 +379,7 @@ tr:hover td { background: rgba(0,212,255,0.02); }
                 <label>Output filename</label>
                 <input type="text" id="cue-filename" placeholder="Game Name.cue">
               </div>
-              <button class="btn btn-primary" onclick="generateCue()">💾 Download .cue</button>
+              <button class="btn btn-primary" id="cue-dl-btn" onclick="generateCue()">💾 Download .cue</button>
               <button class="btn btn-secondary" onclick="resetCue()">✕ Clear</button>
             </div>
           </div>
@@ -821,7 +821,13 @@ async function addCustomConsole() {
 // ══════════════════════════════════════════════════════════════════════════════
 // CUE GENERATOR
 // ══════════════════════════════════════════════════════════════════════════════
-var cueFiles = [];
+var cueFiles = [], cueMode = 'bin';
+
+var DISC_RE = /\s*[\(\[]?(disc|disk|cd|side)\s*[0-9a-z]+[\)\]]?/gi;
+
+function stripDiscTag(name) {
+  return name.replace(DISC_RE, '').trim().replace(/\s+-\s*$/, '').trim();
+}
 
 function setupDropzone(id, onFiles) {
   var dz = document.getElementById(id);
@@ -835,11 +841,31 @@ setupDropzone('cue-dropzone', function(files) { handleCueFiles(files); });
 document.getElementById('cue-file-input').addEventListener('change', function(e) { handleCueFiles(Array.from(e.target.files)); });
 
 function handleCueFiles(files) {
-  cueFiles = files.filter(function(f) { return f.name.toLowerCase().endsWith('.bin'); })
-                  .sort(function(a,b) { return a.name.localeCompare(b.name); });
-  if (!cueFiles.length) { toast('No .bin files found', 'error'); return; }
-  var baseName = cueFiles[0].name.replace(/\.bin$/i,'').replace(/\s*[\(\[]?(disc|disk|cd|side)\s*[0-9a-z]+[\)\]]?/gi,'').trim();
-  document.getElementById('cue-filename').value = baseName + '.cue';
+  files = Array.from(files).sort(function(a,b){ return a.name.localeCompare(b.name); });
+
+  var binFiles = files.filter(function(f){ return f.name.toLowerCase().endsWith('.bin'); });
+  var chdFiles = files.filter(function(f){ return f.name.toLowerCase().endsWith('.chd'); });
+
+  if (chdFiles.length > 0) {
+    handleM3U(chdFiles);
+    return;
+  }
+  if (binFiles.length === 0) { toast('No .bin or .chd files found', 'error'); return; }
+
+  cueMode  = 'bin';
+  cueFiles = binFiles;
+
+  // Filename logic:
+  // Single bin  -> exact same name as file (just swap extension)
+  // Multi bin   -> strip disc tag from first file, keep all other tags
+  var outName;
+  if (cueFiles.length === 1) {
+    outName = cueFiles[0].name.replace(/\.bin$/i, '') + '.cue';
+  } else {
+    outName = stripDiscTag(cueFiles[0].name.replace(/\.bin$/i, '')) + '.cue';
+  }
+  document.getElementById('cue-filename').value = outName;
+
   var trackDiv = document.getElementById('cue-tracks');
   trackDiv.innerHTML = cueFiles.map(function(f, i) {
     var type = i === 0 ? 'MODE2/2352' : 'AUDIO';
@@ -851,8 +877,38 @@ function handleCueFiles(files) {
       '<span style="font-size:0.72rem;color:var(--text3);flex-shrink:0">' + (f.size/1024/1024).toFixed(1) + ' MB</span>' +
       '</div>';
   }).join('');
+
   document.getElementById('cue-track-list').style.display = 'block';
   updateCuePreview();
+}
+
+function handleM3U(chdFiles) {
+  cueMode  = 'm3u';
+  cueFiles = chdFiles;
+
+  // Filename: strip disc tag from first file, keep all other tags
+  var outName = stripDiscTag(chdFiles[0].name.replace(/\.chd$/i, '')) + '.m3u';
+  document.getElementById('cue-filename').value = outName;
+
+  var trackDiv = document.getElementById('cue-tracks');
+  trackDiv.innerHTML = chdFiles.map(function(f, i) {
+    return '<div class="cue-track-row">' +
+      '<span style="font-family:var(--font-mono);font-size:0.78rem;color:var(--text3);width:24px">' + String(i+1).padStart(2,'0') + '</span>' +
+      '<span style="font-family:var(--font-mono);font-size:0.82rem;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + f.name + '</span>' +
+      '<span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--accent3);flex-shrink:0">CHD</span>' +
+      '<span style="font-size:0.72rem;color:var(--text3);flex-shrink:0">' + (f.size/1024/1024).toFixed(1) + ' MB</span>' +
+      '</div>';
+  }).join('');
+
+  document.getElementById('cue-track-list').style.display = 'block';
+
+  // Preview shows the m3u content
+  var lines = chdFiles.map(function(f){ return f.name; });
+  document.getElementById('cue-preview-text').textContent = lines.join('\n');
+  document.getElementById('cue-preview').style.display = 'block';
+
+  // Update download button label
+  document.getElementById('cue-dl-btn').textContent = '💾 Download .m3u';
 }
 
 function buildCueContent() {
@@ -874,24 +930,31 @@ function buildCueContent() {
 function updateCuePreview() {
   document.getElementById('cue-preview-text').textContent = buildCueContent();
   document.getElementById('cue-preview').style.display = 'block';
+  document.getElementById('cue-dl-btn').textContent = '💾 Download .cue';
 }
 
 function generateCue() {
-  var content = buildCueContent();
-  var fname   = document.getElementById('cue-filename').value || 'game.cue';
-  var blob    = new Blob([content], { type: 'text/plain' });
-  var a       = document.createElement('a');
-  a.href      = URL.createObjectURL(blob);
-  a.download  = fname;
+  var fname = document.getElementById('cue-filename').value || 'game.cue';
+  var text;
+  if (cueMode === 'm3u') {
+    text = cueFiles.map(function(f){ return f.name; }).join('\n');
+  } else {
+    text = buildCueContent();
+  }
+  var blob = new Blob([text], { type: 'text/plain' });
+  var a    = document.createElement('a');
+  a.href   = URL.createObjectURL(blob);
+  a.download = fname;
   a.click();
   toast('Downloaded ' + fname, 'success');
 }
 
 function resetCue() {
-  cueFiles = [];
+  cueFiles = []; cueMode = 'bin';
   document.getElementById('cue-track-list').style.display = 'none';
   document.getElementById('cue-preview').style.display    = 'none';
   document.getElementById('cue-file-input').value         = '';
+  document.getElementById('cue-dl-btn').textContent       = '💾 Download .cue';
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
