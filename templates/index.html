@@ -753,7 +753,8 @@ function buildConsoleCard(cid, cons) {
     '<div class="console-card-header">' +
       '<span style="font-size:1.3rem">' + consoleIcon(cid) + '</span>' +
       '<span class="name">' + cons.name + '</span>' +
-      '<label class="toggle"><input type="checkbox" ' + (cons.enabled?'checked':'') + ' onchange="toggleConsole(\'' + cid + '\',this.checked)"><span class="slider"></span></label>' +
+      '<label class="toggle" style="margin-left:auto"><input type="checkbox" ' + (cons.enabled?'checked':'') + ' onchange="toggleConsole(\'' + cid + '\',this.checked)"><span class="slider"></span></label>' +
+      '<button class="btn btn-danger btn-xs" style="margin-left:8px;flex-shrink:0" onclick="deleteConsole(\'' + cid + \')">&#x1F5D1;</button>' +
     '</div>' +
     '<div class="console-card-body">' +
       '<div class="field-row"><label>Folder name</label><input type="text" id="c-' + cid + '-folder" value="' + (cons.folder||'') + '"></div>' +
