@@ -10,7 +10,7 @@ import logging
 from datetime import datetime
 from pathlib import Path
 from flask import Flask, render_template, request, jsonify
-from watchdog.observers import Observer
+from watchdog.observers.polling import PollingObserver as Observer
 from watchdog.events import FileSystemEventHandler
 
 app = Flask(__name__)
@@ -33,7 +33,7 @@ DEFAULT_CONFIG = {
             "name": "PlayStation 1",
             "enabled": True,
             "folder": "PS1",
-            "output_root": "",
+            "output_root": "/roms/PS1roms/roms",
             "input_formats": [".cue", ".iso", ".mds", ".7z", ".zip", ".rar"],
             "output_format": "chd",
             "tool": "chdman",
