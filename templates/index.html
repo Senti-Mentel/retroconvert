@@ -742,27 +742,70 @@ async function renderConsoles() {
 
 function buildConsoleCard(cid, cons) {
   var fmtOptions = Object.entries(OUTPUT_FORMATS).map(function(e) {
-    return '<option value="' + e[0] + '" ' + (cons.output_format===e[0]?'selected':'') + '>' + e[0].toUpperCase() + ' — ' + e[1].label + '</option>';
+    return '<option value="' + e[0] + '"' + (cons.output_format===e[0]?' selected':'') + '>' + e[0].toUpperCase() + ' - ' + e[1].label + '</option>';
   }).join('');
   var tools = (OUTPUT_FORMATS[cons.output_format] && OUTPUT_FORMATS[cons.output_format].tools) || [];
-  var toolOptions = tools.map(function(t) { return '<option value="' + t + '" ' + (cons.tool===t?'selected':'') + '>' + t + '</option>'; }).join('');
+  var toolOptions = tools.map(function(t) {
+    return '<option value="' + t + '"' + (cons.tool===t?' selected':'') + '>' + t + '</option>';
+  }).join('');
+  var swapTarget = (cons.options && cons.options.swap_target) || 'z64';
+  var isN64Swap  = cons.output_format === 'n64swap';
+  var isExtract  = cons.output_format === 'extract';
+
   var div = document.createElement('div');
   div.className = 'console-card' + (cons.enabled ? ' enabled' : '');
   div.id = 'card-' + cid;
-  div.innerHTML =
-    '<div class="console-card-header">' +
-      '<span style="font-size:1.3rem">' + consoleIcon(cid) + '</span>' +
-      '<span class="name">' + cons.name + '</span>' +
-      '<label class="toggle" style="margin-left:auto"><input type="checkbox" ' + (cons.enabled?'checked':'') + ' onchange="toggleConsole(\'' + cid + '\',this.checked)"><span class="slider"></span></label>' +
-      '<button class="btn btn-danger btn-xs" style="margin-left:8px;flex-shrink:0" onclick="deleteConsole(\'' + cid + \')">&#x1F5D1;</button>' +
+
+  // Build header
+  var header = document.createElement('div');
+  header.className = 'console-card-header';
+  header.innerHTML =
+    '<span style="font-size:1.3rem">' + consoleIcon(cid) + '</span>' +
+    '<span class="name">' + cons.name + '</span>' +
+    '<label class="toggle" style="margin-left:auto"><input type="checkbox"' + (cons.enabled?' checked':'') + ' onchange="toggleConsole('' + cid + '',this.checked)"><span class="slider"></span></label>';
+
+  // Delete button — appended separately to avoid escaping issues
+  var delBtn = document.createElement('button');
+  delBtn.className = 'btn btn-danger btn-xs';
+  delBtn.style.cssText = 'margin-left:8px;flex-shrink:0';
+  delBtn.innerHTML = '&#x1F5D1;';
+  delBtn.addEventListener('click', (function(id) {
+    return function() { deleteConsole(id); };
+  })(cid));
+  header.appendChild(delBtn);
+  div.appendChild(header);
+
+  // Build body
+  var body = document.createElement('div');
+  body.className = 'console-card-body';
+  body.innerHTML =
+    '<div class="field-row"><label>Folder name</label><input type="text" id="c-' + cid + '-folder" value="' + (cons.folder||'') + '"></div>' +
+    '<div class="field-row"><label>Output root</label><input type="text" id="c-' + cid + '-outroot" value="' + (cons.output_root||'') + '" placeholder="Leave blank for auto-detect"></div>' +
+    '<div class="field-row"><label>Output format</label><select id="c-' + cid + '-format" onchange="onFormatChange('' + cid + '')">' + fmtOptions + '</select></div>' +
+    '<div class="field-row"><label>Tool</label><select id="c-' + cid + '-tool" onchange="onToolChange('' + cid + '')">' + (toolOptions || '<option value="' + (cons.tool||'none') + '">' + (cons.tool||'none') + '</option>') + '</select></div>' +
+    '<div class="field-row" id="c-' + cid + '-swaprow"' + (isN64Swap?'':' style="display:none"') + '>' +
+      '<label>Swap to</label>' +
+      '<select id="c-' + cid + '-swaptarget">' +
+        '<option value="z64"' + (swapTarget==='z64'?' selected':'') + '>.z64 (Big Endian)</option>' +
+        '<option value="v64"' + (swapTarget==='v64'?' selected':'') + '>.v64 (Byte Swapped)</option>' +
+        '<option value="n64"' + (swapTarget==='n64'?' selected':'') + '>.n64 (Little Endian)</option>' +
+      '</select>' +
     '</div>' +
-    '<div class="console-card-body">' +
-      '<div class="field-row"><label>Folder name</label><input type="text" id="c-' + cid + '-folder" value="' + (cons.folder||'') + '"></div>' +
-      '<div class="field-row"><label>Output root</label><input type="text" id="c-' + cid + '-outroot" value="' + (cons.output_root||'') + '" placeholder="Leave blank for auto-detect"></div>' +
-      '<div class="field-row"><label>Output format</label><select id="c-' + cid + '-format" onchange="updateToolOptions(\'' + cid + '\')">' + fmtOptions + '</select></div>' +
-      '<div class="field-row"><label>Tool</label><select id="c-' + cid + '-tool">' + (toolOptions || '<option value="' + cons.tool + '">' + cons.tool + '</option>') + '</select></div>' +
-      '<div class="field-row"><label>Input exts</label><input type="text" id="c-' + cid + '-inputs" value="' + (cons.input_formats||[]).join(', ') + '" placeholder=".cue, .iso, .7z"></div>' +
+    '<div class="field-row" id="c-' + cid + '-extractrow"' + (isExtract?'':' style="display:none"') + '>' +
+      '<label>Subfolder</label>' +
+      '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.78rem;color:var(--text2)">' +
+        '<input type="checkbox" id="c-' + cid + '-extractsub"' + (cons.extract_to_subfolder?' checked':'') + '> Extract into subfolder' +
+      '</label>' +
+    '</div>' +
+    '<div class="field-row"><label>Input exts</label><input type="text" id="c-' + cid + '-inputs" value="' + (cons.input_formats||[]).join(', ') + '" placeholder=".cue, .iso, .7z"></div>' +
+    '<div class="field-row" style="padding-top:8px;border-top:1px solid var(--border);margin-top:2px">' +
+      '<label style="color:var(--text3)">After convert</label>' +
+      '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.78rem;color:var(--text2)">' +
+        '<input type="checkbox" id="c-' + cid + '-delorg"' + (cons.delete_originals?' checked':'') + '> Delete originals' +
+      '</label>' +
     '</div>';
+
+  div.appendChild(body);
   return div;
 }
 
