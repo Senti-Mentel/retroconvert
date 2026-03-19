@@ -26,17 +26,18 @@ os.makedirs("data", exist_ok=True)
 # ──────────────────────────────────────────────────────────────────────────────
 DEFAULT_CONFIG = {
     "watch_dir": "",
-    "delete_originals": False,
     "parallel_jobs": 1,
     "consoles": {
         "ps1": {
             "name": "PlayStation 1",
             "enabled": True,
             "folder": "PS1",
-            "output_root": "/roms/PS1roms/roms",
-            "input_formats": [".cue", ".iso", ".mds", ".7z", ".zip", ".rar"],
+            "output_root": "",
+            "input_formats": [".cue", ".iso", ".mds", ".chd", ".7z", ".zip", ".rar"],
             "output_format": "chd",
             "tool": "chdman",
+            "delete_originals": False,
+            "extract_to_subfolder": False,
             "options": {}
         },
         "ps2": {
@@ -44,9 +45,11 @@ DEFAULT_CONFIG = {
             "enabled": True,
             "folder": "PS2",
             "output_root": "",
-            "input_formats": [".iso", ".mds", ".7z", ".zip", ".rar"],
+            "input_formats": [".iso", ".mds", ".chd", ".7z", ".zip", ".rar"],
             "output_format": "chd",
             "tool": "chdman",
+            "delete_originals": False,
+            "extract_to_subfolder": False,
             "options": {}
         },
         "psp": {
@@ -54,9 +57,11 @@ DEFAULT_CONFIG = {
             "enabled": True,
             "folder": "PSP",
             "output_root": "",
-            "input_formats": [".iso", ".bin", ".7z", ".zip", ".rar"],
+            "input_formats": [".iso", ".cso", ".zso", ".bin", ".7z", ".zip", ".rar"],
             "output_format": "cso",
             "tool": "maxcso",
+            "delete_originals": False,
+            "extract_to_subfolder": False,
             "options": {}
         },
         "saturn": {
@@ -64,9 +69,11 @@ DEFAULT_CONFIG = {
             "enabled": True,
             "folder": "Saturn",
             "output_root": "",
-            "input_formats": [".cue", ".iso", ".mds", ".7z", ".zip", ".rar"],
+            "input_formats": [".cue", ".iso", ".mds", ".chd", ".7z", ".zip", ".rar"],
             "output_format": "chd",
             "tool": "chdman",
+            "delete_originals": False,
+            "extract_to_subfolder": False,
             "options": {}
         },
         "dreamcast": {
@@ -74,9 +81,11 @@ DEFAULT_CONFIG = {
             "enabled": True,
             "folder": "Dreamcast",
             "output_root": "",
-            "input_formats": [".gdi", ".cdi", ".cue", ".7z", ".zip", ".rar"],
+            "input_formats": [".gdi", ".cdi", ".cue", ".chd", ".7z", ".zip", ".rar"],
             "output_format": "chd",
             "tool": "chdman",
+            "delete_originals": False,
+            "extract_to_subfolder": False,
             "options": {}
         },
         "gamecube": {
@@ -84,9 +93,11 @@ DEFAULT_CONFIG = {
             "enabled": True,
             "folder": "GameCube",
             "output_root": "",
-            "input_formats": [".iso", ".gcm", ".7z", ".zip", ".rar"],
+            "input_formats": [".iso", ".gcm", ".rvz", ".7z", ".zip", ".rar"],
             "output_format": "rvz",
             "tool": "dolphin-tool",
+            "delete_originals": False,
+            "extract_to_subfolder": False,
             "options": {"compression": "zstd", "block_size": "131072"}
         },
         "wii": {
@@ -94,9 +105,11 @@ DEFAULT_CONFIG = {
             "enabled": True,
             "folder": "Wii",
             "output_root": "",
-            "input_formats": [".iso", ".wbfs", ".wad", ".7z", ".zip", ".rar"],
+            "input_formats": [".iso", ".wbfs", ".rvz", ".7z", ".zip", ".rar"],
             "output_format": "rvz",
             "tool": "dolphin-tool",
+            "delete_originals": False,
+            "extract_to_subfolder": False,
             "options": {"compression": "zstd", "block_size": "131072"}
         },
         "xbox_og": {
@@ -107,6 +120,8 @@ DEFAULT_CONFIG = {
             "input_formats": [".iso", ".7z", ".zip", ".rar"],
             "output_format": "iso",
             "tool": "extract-xiso",
+            "delete_originals": False,
+            "extract_to_subfolder": False,
             "options": {"mode": "repack"}
         },
         "xbox_360": {
@@ -117,6 +132,8 @@ DEFAULT_CONFIG = {
             "input_formats": [".iso", ".7z", ".zip", ".rar"],
             "output_format": "god",
             "tool": "iso2god",
+            "delete_originals": False,
+            "extract_to_subfolder": False,
             "options": {}
         },
         "nes": {
@@ -127,6 +144,8 @@ DEFAULT_CONFIG = {
             "input_formats": [".nes", ".unf", ".7z", ".zip", ".rar"],
             "output_format": "7z",
             "tool": "7z",
+            "delete_originals": False,
+            "extract_to_subfolder": False,
             "options": {}
         },
         "snes": {
@@ -137,6 +156,8 @@ DEFAULT_CONFIG = {
             "input_formats": [".smc", ".sfc", ".fig", ".swc", ".7z", ".zip", ".rar"],
             "output_format": "7z",
             "tool": "7z",
+            "delete_originals": False,
+            "extract_to_subfolder": False,
             "options": {}
         },
         "n64": {
@@ -147,7 +168,9 @@ DEFAULT_CONFIG = {
             "input_formats": [".z64", ".n64", ".v64", ".7z", ".zip", ".rar"],
             "output_format": "7z",
             "tool": "7z",
-            "options": {}
+            "delete_originals": False,
+            "extract_to_subfolder": False,
+            "options": {"swap_target": "z64"}
         },
         "gba": {
             "name": "Game Boy Advance",
@@ -157,6 +180,8 @@ DEFAULT_CONFIG = {
             "input_formats": [".gba", ".agb", ".7z", ".zip", ".rar"],
             "output_format": "7z",
             "tool": "7z",
+            "delete_originals": False,
+            "extract_to_subfolder": False,
             "options": {}
         },
         "nds": {
@@ -167,6 +192,8 @@ DEFAULT_CONFIG = {
             "input_formats": [".nds", ".dsi", ".7z", ".zip", ".rar"],
             "output_format": "7z",
             "tool": "7z",
+            "delete_originals": False,
+            "extract_to_subfolder": False,
             "options": {}
         },
         "3ds": {
@@ -177,6 +204,8 @@ DEFAULT_CONFIG = {
             "input_formats": [".3ds", ".cia", ".cci", ".7z", ".zip", ".rar"],
             "output_format": "7z",
             "tool": "7z",
+            "delete_originals": False,
+            "extract_to_subfolder": False,
             "options": {}
         },
         "arcade": {
@@ -187,23 +216,35 @@ DEFAULT_CONFIG = {
             "input_formats": [".zip", ".7z"],
             "output_format": "zip",
             "tool": "none",
+            "delete_originals": False,
+            "extract_to_subfolder": False,
             "options": {}
         }
     }
 }
 
 OUTPUT_FORMATS = {
-    "chd":  {"label": "CHD (Compressed Hunks of Data)", "tools": ["chdman"]},
-    "cso":  {"label": "CSO (Compressed ISO)",           "tools": ["maxcso"]},
-    "zso":  {"label": "ZSO (Zstandard ISO)",            "tools": ["maxcso"]},
-    "rvz":  {"label": "RVZ (Dolphin Compressed)",       "tools": ["dolphin-tool"]},
-    "iso":  {"label": "ISO / Repacked xiso",            "tools": ["extract-xiso", "none"]},
-    "god":  {"label": "GoD (Games on Demand / X360)",   "tools": ["iso2god"]},
-    "7z":   {"label": "7-Zip Archive",                  "tools": ["7z"]},
-    "zip":  {"label": "ZIP Archive",                    "tools": ["7z"]},
+    "chd":     {"label": "CHD (Compressed Hunks of Data)", "tools": ["chdman"]},
+    "cue":     {"label": "BIN/CUE (extract from CHD)",     "tools": ["chdman"]},
+    "cso":     {"label": "CSO (Compressed ISO)",           "tools": ["maxcso"]},
+    "zso":     {"label": "ZSO (Zstandard ISO)",            "tools": ["maxcso"]},
+    "iso":     {"label": "ISO (Uncompressed)",             "tools": ["maxcso", "dolphin-tool", "extract-xiso", "none"]},
+    "rvz":     {"label": "RVZ (Dolphin Compressed)",       "tools": ["dolphin-tool"]},
+    "god":     {"label": "GoD (Games on Demand / X360)",   "tools": ["iso2god"]},
+    "7z":      {"label": "7-Zip Archive",                  "tools": ["7z"]},
+    "zip":     {"label": "ZIP Archive",                    "tools": ["7z"]},
+    "n64swap": {"label": "N64 Format Swap",                "tools": ["n64swap"]},
+    "extract": {"label": "Extract Archive (no convert)",   "tools": ["7z"]},
 }
 
 ARCHIVE_EXTS = {".7z", ".zip", ".rar"}
+N64_EXTS     = {".z64", ".v64", ".n64"}
+
+N64_HEADERS = {
+    "z64": bytes([0x80, 0x37, 0x12, 0x40]),
+    "v64": bytes([0x37, 0x80, 0x40, 0x12]),
+    "n64": bytes([0x40, 0x12, 0x37, 0x80]),
+}
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Disc / game name helpers
@@ -214,11 +255,6 @@ DISC_PATTERN = re.compile(
 )
 
 def parse_game_name(filename):
-    """
-    Returns (game_name, disc_number).
-    game_name = original name minus disc tag only; all other tags kept.
-    disc_number = int or None.
-    """
     stem = Path(filename).stem
     m    = DISC_PATTERN.search(stem)
     if not m:
@@ -233,8 +269,7 @@ def parse_game_name(filename):
 
 
 def uses_subfolders(output_format):
-    """Only CHD consoles get per-game subfolders and M3U files."""
-    return output_format == "chd"
+    return output_format in ("chd", "cue")
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -307,31 +342,20 @@ def try_write_m3u(completed_job):
         return
     if completed_job["status"] not in ("done", "simulated"):
         return
-
     game_name  = completed_job["game_name"]
     console_id = completed_job["console_id"]
     output_dir = os.path.dirname(completed_job["dst"]) if completed_job["dst"] else None
     if not output_dir:
         return
-
     with queue_lock:
-        all_jobs = [
-            j for j in (job_queue + job_history)
-            if j["console_id"] == console_id and j["game_name"] == game_name
-        ]
-
+        all_jobs = [j for j in (job_queue + job_history)
+                    if j["console_id"] == console_id and j["game_name"] == game_name]
     if any(j["status"] in ("pending", "running") for j in all_jobs):
         return
-
-    done_jobs = [
-        j for j in all_jobs
-        if j["status"] in ("done", "simulated") and j["dst"]
-    ]
+    done_jobs = [j for j in all_jobs if j["status"] in ("done", "simulated") and j["dst"]]
     if not done_jobs:
         return
-
     done_jobs.sort(key=lambda j: j["disc_num"] or 1)
-
     m3u_path = os.path.join(output_dir, f"{game_name}.m3u")
     try:
         with open(m3u_path, "w", encoding="utf-8") as f:
@@ -342,9 +366,8 @@ def try_write_m3u(completed_job):
     except Exception as e:
         append_log(f"❌ M3U write failed for {game_name}: {e}")
 
-
 # ──────────────────────────────────────────────────────────────────────────────
-# Pre-extraction
+# Pre-extraction (archives before conversion)
 # ──────────────────────────────────────────────────────────────────────────────
 def extract_archive(job):
     src = job["src"]
@@ -372,8 +395,9 @@ def extract_archive(job):
         cons    = cfg["consoles"].get(job["console_id"], {})
         allowed = [e.lower() for e in cons.get("input_formats", []) if e not in ARCHIVE_EXTS]
 
-        priority_order = [".cue", ".gdi", ".cdi", ".mds", ".iso", ".bin",
-                          ".img", ".mdf", ".z64", ".n64", ".v64", ".nes",
+        priority_order = [".cue", ".gdi", ".cdi", ".mds", ".chd", ".iso", ".bin",
+                          ".img", ".mdf", ".cso", ".zso", ".rvz",
+                          ".z64", ".n64", ".v64", ".nes",
                           ".smc", ".sfc", ".gba", ".nds", ".3ds", ".cia"]
 
         found_files = []
@@ -408,33 +432,85 @@ def extract_archive(job):
         shutil.rmtree(tmp_dir, ignore_errors=True)
         return None, None
 
+# ──────────────────────────────────────────────────────────────────────────────
+# N64 byte swap helpers
+# ──────────────────────────────────────────────────────────────────────────────
+def detect_n64_format(filepath):
+    try:
+        with open(filepath, "rb") as f:
+            header = f.read(4)
+        for fmt, sig in N64_HEADERS.items():
+            if header == sig:
+                return fmt
+    except Exception:
+        pass
+    return "z64"
+
+def n64_to_z64(data):
+    b = bytearray(data)
+    if b[:4] == bytearray(N64_HEADERS["z64"]):
+        return bytes(b)
+    out = bytearray(len(b))
+    if b[:4] == bytearray(N64_HEADERS["v64"]):
+        for i in range(0, len(b), 2):
+            out[i], out[i+1] = b[i+1], b[i]
+    else:  # n64
+        for i in range(0, len(b), 4):
+            out[i], out[i+1], out[i+2], out[i+3] = b[i+3], b[i+2], b[i+1], b[i]
+    return bytes(out)
+
+def swap_n64_file(src, target_fmt, out_dir, stem):
+    append_log(f"🔄 N64 swap: {os.path.basename(src)} → .{target_fmt}")
+    with open(src, "rb") as f:
+        data = f.read()
+    z64 = n64_to_z64(data)
+    if target_fmt == "z64":
+        out = z64
+    elif target_fmt == "v64":
+        out = bytearray(len(z64))
+        for i in range(0, len(z64), 2):
+            out[i], out[i+1] = z64[i+1], z64[i]
+        out = bytes(out)
+    else:  # n64
+        out = bytearray(len(z64))
+        for i in range(0, len(z64), 4):
+            out[i], out[i+1], out[i+2], out[i+3] = z64[i+3], z64[i+2], z64[i+1], z64[i]
+        out = bytes(out)
+    dst = os.path.join(out_dir, stem + "." + target_fmt)
+    with open(dst, "wb") as f:
+        f.write(out)
+    return dst
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Output path resolver
 # ──────────────────────────────────────────────────────────────────────────────
-def resolve_output_dir(job):
-    """
-    CHD consoles:
-      - If console has output_root set: use that as the base for the game subfolder.
-      - Otherwise: walk up from source file to find the console root folder by name.
-    Non-CHD consoles: flat output next to the source file.
-    """
+def resolve_output_dir(job, console=None):
     src_path = Path(job["src"])
+    out_fmt  = job["output_fmt"]
 
-    if not uses_subfolders(job["output_fmt"]):
+    cfg  = load_config()
+    cons = console or cfg["consoles"].get(job["console_id"], {})
+
+    # Extract mode: optionally into a subfolder named after the archive
+    if out_fmt == "extract":
+        base = str(src_path.parent)
+        if cons.get("extract_to_subfolder"):
+            sub = os.path.join(base, src_path.stem)
+            os.makedirs(sub, exist_ok=True)
+            return sub
+        return base
+
+    # Non-subfolder formats: flat next to source
+    if not uses_subfolders(out_fmt):
         return str(src_path.parent)
 
-    cfg      = load_config()
-    cons     = cfg["consoles"].get(job["console_id"], {})
+    # CHD / CUE: use game subfolder
     out_root = cons.get("output_root", "").strip()
-
     if out_root:
-        # User explicitly configured the output root — use it directly
         game_folder = os.path.join(out_root, job["game_name"])
         os.makedirs(game_folder, exist_ok=True)
         return game_folder
 
-    # Fallback: walk up from source file to find the console root folder by name
     folder       = cons.get("folder", "").lower()
     console_root = None
     for parent in src_path.parents:
@@ -443,40 +519,50 @@ def resolve_output_dir(job):
             break
 
     if console_root is None:
-        # Last resort: two levels up from source file
         console_root = str(src_path.parent.parent)
 
     game_folder = os.path.join(console_root, job["game_name"])
     os.makedirs(game_folder, exist_ok=True)
     return game_folder
 
-
 # ──────────────────────────────────────────────────────────────────────────────
 # Command builders
 # ──────────────────────────────────────────────────────────────────────────────
-def build_command(job, src_file):
-    cfg     = load_config()
-    console = cfg["consoles"].get(job["console_id"])
+def build_command(job, src_file, console):
     tool    = console["tool"]
-    out_dir = resolve_output_dir(job)
     out_fmt = console["output_format"]
+    out_dir = resolve_output_dir(job, console)
 
     if Path(job["src"]).suffix.lower() in ARCHIVE_EXTS:
         out_stem = Path(src_file).stem
     else:
         out_stem = Path(job["src"]).stem
 
+    # ── CHD → BIN/CUE (reverse) ──────────────────────────────────────────────
+    if out_fmt == "cue":
+        dst = os.path.join(out_dir, out_stem + ".cue")
+        return ["chdman", "extractcd", "-i", src_file, "-o", dst], dst
+
+    # ── Forward CHD ──────────────────────────────────────────────────────────
     if tool == "chdman":
         src_ext = Path(src_file).suffix.lower()
         mode    = "createdvd" if src_ext in (".gdi", ".cdi") else "createcd"
         dst     = os.path.join(out_dir, out_stem + ".chd")
         return ["chdman", mode, "-i", src_file, "-o", dst, "--force"], dst
 
-    elif tool == "maxcso":
+    # ── maxcso: forward CSO/ZSO or reverse to ISO ─────────────────────────────
+    if tool == "maxcso":
+        if out_fmt == "iso":
+            dst = os.path.join(out_dir, out_stem + ".iso")
+            return ["maxcso", "--decompress", src_file, "--output", dst], dst
         dst = os.path.join(out_dir, out_stem + "." + out_fmt)
         return ["maxcso", src_file, "--output", dst], dst
 
-    elif tool == "dolphin-tool":
+    # ── dolphin-tool: forward RVZ or reverse to ISO ───────────────────────────
+    if tool == "dolphin-tool":
+        if out_fmt == "iso":
+            dst = os.path.join(out_dir, out_stem + ".iso")
+            return ["dolphin-tool", "convert", "-f", "iso", "-i", src_file, "-o", dst], dst
         opts = console.get("options", {})
         dst  = os.path.join(out_dir, out_stem + ".rvz")
         return [
@@ -487,7 +573,8 @@ def build_command(job, src_file):
             "-i", src_file, "-o", dst
         ], dst
 
-    elif tool == "extract-xiso":
+    # ── extract-xiso ──────────────────────────────────────────────────────────
+    if tool == "extract-xiso":
         dst  = os.path.join(out_dir, out_stem + "_repacked.iso")
         mode = console.get("options", {}).get("mode", "repack")
         if mode == "repack":
@@ -495,21 +582,28 @@ def build_command(job, src_file):
         dst = os.path.join(out_dir, out_stem + "_extracted")
         return ["extract-xiso", "-x", src_file, "-d", dst], dst
 
-    elif tool == "iso2god":
+    # ── iso2god ───────────────────────────────────────────────────────────────
+    if tool == "iso2god":
         dst = os.path.join(out_dir, out_stem + "_god")
         os.makedirs(dst, exist_ok=True)
         return ["iso2god", src_file, dst], dst
 
-    elif tool == "7z":
+    # ── 7z archive ───────────────────────────────────────────────────────────
+    if tool == "7z":
         dst = os.path.join(out_dir, out_stem + ".7z")
         return ["7z", "a", "-mx=9", dst, src_file], dst
 
-    elif tool == "zip":
+    # ── zip ───────────────────────────────────────────────────────────────────
+    if tool == "zip":
         dst = os.path.join(out_dir, out_stem + ".zip")
         return ["7z", "a", "-tzip", dst, src_file], dst
 
-    return None, None
+    # ── extract (no conversion) ───────────────────────────────────────────────
+    if out_fmt == "extract":
+        out_d = resolve_output_dir(job, console)
+        return ["7z", "x", src_file, f"-o{out_d}", "-y"], out_d
 
+    return None, None
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Progress parsers
@@ -523,13 +617,13 @@ def parse_progress(tool, line, job):
         if m:
             job["progress"]     = int(m.group(1))
             job["progress_msg"] = line[:80]
-        elif "creating" in line.lower() or "compressing" in line.lower():
+        elif "creating" in line.lower() or "compressing" in line.lower() or "extracting" in line.lower():
             job["progress_msg"] = line[:80]
     elif tool == "maxcso":
         m = re.search(r'([\d.]+)%', line)
         if m:
             job["progress"]     = int(float(m.group(1)))
-            job["progress_msg"] = f"{m.group(1)}% compressed"
+            job["progress_msg"] = f"{m.group(1)}% processed"
     elif tool == "dolphin-tool":
         m = re.search(r'(\d+)%', line)
         if m:
@@ -539,13 +633,12 @@ def parse_progress(tool, line, job):
         m = re.match(r'\s*(\d+)%', line)
         if m:
             job["progress"]     = int(m.group(1))
-            job["progress_msg"] = f"{m.group(1)}% compressed"
+            job["progress_msg"] = f"{m.group(1)}% done"
     elif tool in ("extract-xiso", "iso2god"):
         if job["started"]:
             elapsed             = (datetime.now() - datetime.fromisoformat(job["started"])).seconds
             job["progress"]     = min(95, elapsed // 3)
             job["progress_msg"] = line[:80] if line else "Processing…"
-
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Job runner
@@ -558,6 +651,99 @@ def run_job(job):
     if job["disc_num"]:
         append_log(f"   🗂 Game: {job['game_name']} — Disc {job['disc_num']}")
 
+    cfg     = load_config()
+    console = cfg["consoles"].get(job["console_id"], {})
+    tool    = console.get("tool", "none")
+    out_fmt = console.get("output_format", "")
+
+    # ── Extract mode: just unpack, no conversion ──────────────────────────────
+    if out_fmt == "extract":
+        src     = job["src"]
+        out_dir = resolve_output_dir(job, console)
+        job["progress_msg"] = "Extracting…"
+        try:
+            result = subprocess.run(
+                ["7z", "x", src, f"-o{out_dir}", "-y"],
+                capture_output=True, text=True, timeout=1800
+            )
+            if result.returncode == 0:
+                job["status"]       = "done"
+                job["progress"]     = 100
+                job["progress_msg"] = "Extracted"
+                job["dst"]          = out_dir
+                job["finished"]     = datetime.now().isoformat()
+                append_log(f"✅ Extracted: {job['filename']} → {out_dir}")
+                if console.get("delete_originals") and os.path.exists(src):
+                    os.remove(src)
+                    append_log(f"🗑  Deleted original: {job['filename']}")
+            else:
+                job["status"] = "error"
+                job["error"]  = result.stderr[:500]
+                append_log(f"❌ Extract error: {job['filename']}: {job['error']}")
+        except FileNotFoundError:
+            job["status"]       = "simulated"
+            job["progress"]     = 100
+            job["progress_msg"] = "7z not found — simulated"
+            job["finished"]     = datetime.now().isoformat()
+            append_log(f"🔸 Simulated extract: {job['filename']}")
+        except Exception as e:
+            job["status"] = "error"
+            job["error"]  = str(e)
+            append_log(f"❌ Exception: {job['filename']}: {e}")
+        return
+
+    # ── N64 format swap: in-process, no subprocess ────────────────────────────
+    if tool == "n64swap":
+        src = job["src"]
+        if Path(src).suffix.lower() in ARCHIVE_EXTS:
+            extracted, tmp_dir = extract_archive(job)
+            job["extracted_tmp"] = tmp_dir
+            if not extracted:
+                job["status"] = "error"
+                job["error"]  = "Extraction failed"
+                _cleanup(job)
+                return
+            src = extracted
+
+        src_fmt    = detect_n64_format(src)
+        target_fmt = console.get("options", {}).get("swap_target", "z64")
+        if src_fmt == target_fmt:
+            job["status"]       = "skipped"
+            job["progress"]     = 100
+            job["progress_msg"] = f"Already {target_fmt}"
+            append_log(f"⏭ N64 skip: {job['filename']} already .{target_fmt}")
+            _cleanup(job)
+            return
+
+        out_dir  = resolve_output_dir(job, console)
+        out_stem = Path(job["src"]).stem if Path(job["src"]).suffix.lower() not in ARCHIVE_EXTS else Path(src).stem
+        try:
+            dst = swap_n64_file(src, target_fmt, out_dir, out_stem)
+            job["status"]       = "done"
+            job["progress"]     = 100
+            job["progress_msg"] = "Swapped"
+            job["dst"]          = dst
+            job["finished"]     = datetime.now().isoformat()
+            append_log(f"✅ N64 swap: {job['filename']} → .{target_fmt}")
+            if console.get("delete_originals") and os.path.exists(job["src"]):
+                os.remove(job["src"])
+                append_log(f"🗑  Deleted: {job['filename']}")
+        except Exception as e:
+            job["status"] = "error"
+            job["error"]  = str(e)
+            append_log(f"❌ N64 swap error: {e}")
+        _cleanup(job)
+        return
+
+    # ── Skip no-op ────────────────────────────────────────────────────────────
+    if tool == "none":
+        job["status"]       = "skipped"
+        job["progress"]     = 100
+        job["progress_msg"] = "No conversion needed"
+        append_log(f"⏭ Skipped: {job['filename']}")
+        return
+
+    # ── Standard conversion path ──────────────────────────────────────────────
     src_file, tmp_dir = extract_archive(job)
     job["extracted_tmp"] = tmp_dir
     if src_file is None:
@@ -566,19 +752,7 @@ def run_job(job):
         _cleanup(job)
         return
 
-    cfg  = load_config()
-    cons = cfg["consoles"].get(job["console_id"], {})
-    tool = cons.get("tool", "none")
-
-    if tool == "none":
-        job["status"]       = "skipped"
-        job["progress"]     = 100
-        job["progress_msg"] = "No conversion needed"
-        append_log(f"⏭ Skipped (no-op): {job['filename']}")
-        _cleanup(job)
-        return
-
-    cmd, dst = build_command(job, src_file)
+    cmd, dst = build_command(job, src_file, console)
     if cmd is None:
         job["status"] = "error"
         job["error"]  = "Could not build conversion command"
@@ -602,8 +776,8 @@ def run_job(job):
             job["progress"]     = 100
             job["progress_msg"] = "Complete"
             job["finished"]     = datetime.now().isoformat()
-            append_log(f"✅ Done: {job['filename']} → {os.path.basename(dst)}")
-            if cfg.get("delete_originals") and os.path.exists(job["src"]):
+            append_log(f"✅ Done: {job['filename']} → {os.path.basename(str(dst))}")
+            if console.get("delete_originals") and os.path.exists(job["src"]):
                 os.remove(job["src"])
                 append_log(f"🗑  Deleted original: {job['filename']}")
         else:
@@ -618,7 +792,7 @@ def run_job(job):
         job["progress_msg"] = f"Tool '{tool}' not installed — simulated"
         job["finished"]     = datetime.now().isoformat()
         job["note"]         = f"Tool '{cmd[0]}' not found — simulated"
-        append_log(f"🔸 Simulated (tool not installed): {job['filename']} → {cmd[0]}")
+        append_log(f"🔸 Simulated: {job['filename']} → {cmd[0]}")
 
     except subprocess.TimeoutExpired:
         proc.kill()
@@ -643,7 +817,6 @@ def _cleanup(job):
         shutil.rmtree(tmp, ignore_errors=True)
         job["extracted_tmp"] = None
 
-
 # ──────────────────────────────────────────────────────────────────────────────
 # Worker thread
 # ──────────────────────────────────────────────────────────────────────────────
@@ -664,7 +837,6 @@ def worker():
             time.sleep(1)
 
 threading.Thread(target=worker, daemon=True).start()
-
 
 # ──────────────────────────────────────────────────────────────────────────────
 # File watcher
@@ -697,7 +869,6 @@ def enqueue_file(filepath, cfg):
     append_log(f"📥 Queued: {job['filename']} ({cons['name']}){disc_info}")
 
 def wait_and_enqueue(filepath):
-    """Wait until file size is stable before queuing — handles slow network transfers."""
     stable_for = 0
     last_size  = -1
     while stable_for < 3:
@@ -750,7 +921,6 @@ def scan_existing(watch_dir, cfg):
             count += 1
     append_log(f"🔍 Scan complete — {count} files checked")
 
-
 # ──────────────────────────────────────────────────────────────────────────────
 # Routes
 # ──────────────────────────────────────────────────────────────────────────────
@@ -768,9 +938,8 @@ def api_save_config():
     data    = request.json
     cfg     = load_config()
     old_dir = cfg.get("watch_dir")
-    cfg["watch_dir"]        = data.get("watch_dir", "")
-    cfg["delete_originals"] = data.get("delete_originals", False)
-    cfg["parallel_jobs"]    = int(data.get("parallel_jobs", 1))
+    cfg["watch_dir"]     = data.get("watch_dir", "")
+    cfg["parallel_jobs"] = int(data.get("parallel_jobs", 1))
     if "consoles" in data:
         for cid, vals in data["consoles"].items():
             if cid in cfg["consoles"]:
@@ -780,6 +949,14 @@ def api_save_config():
     save_config(cfg)
     if cfg["watch_dir"] != old_dir:
         start_watcher(cfg["watch_dir"])
+    return jsonify({"ok": True})
+
+@app.route("/api/console/<cid>", methods=["DELETE"])
+def delete_console(cid):
+    cfg = load_config()
+    if cid in cfg["consoles"]:
+        del cfg["consoles"][cid]
+        save_config(cfg)
     return jsonify({"ok": True})
 
 @app.route("/api/queue", methods=["GET"])

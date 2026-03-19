@@ -329,10 +329,6 @@ tr:hover td { background: rgba(0,212,255,0.02); }
         <div class="card-header"><span class="icon">⚙️</span> Conversion Options</div>
         <div class="card-body">
           <div class="toggle-row">
-            <div class="desc"><strong>Delete originals after conversion</strong><small>Permanently removes source files once a job completes successfully.</small></div>
-            <label class="toggle"><input type="checkbox" id="s-delete-originals"><span class="slider"></span></label>
-          </div>
-          <div class="toggle-row">
             <div class="desc"><strong>Parallel jobs</strong><small>Number of concurrent conversion jobs.</small></div>
             <input type="number" id="s-parallel-jobs" min="1" max="8" value="1" style="width:70px;">
           </div>
@@ -717,14 +713,12 @@ async function loadLogs() {
 // ── Settings ───────────────────────────────────────────────────────────────
 async function loadSettings() {
   cfg = await apiFetch('/api/config');
-  document.getElementById('s-watch-dir').value          = cfg.watch_dir || '';
-  document.getElementById('s-delete-originals').checked = cfg.delete_originals;
-  document.getElementById('s-parallel-jobs').value      = cfg.parallel_jobs || 1;
+  document.getElementById('s-watch-dir').value     = cfg.watch_dir || '';
+  document.getElementById('s-parallel-jobs').value = cfg.parallel_jobs || 1;
 }
 async function saveSettings() {
-  cfg.watch_dir        = document.getElementById('s-watch-dir').value.trim();
-  cfg.delete_originals = document.getElementById('s-delete-originals').checked;
-  cfg.parallel_jobs    = parseInt(document.getElementById('s-parallel-jobs').value) || 1;
+  cfg.watch_dir     = document.getElementById('s-watch-dir').value.trim();
+  cfg.parallel_jobs = parseInt(document.getElementById('s-parallel-jobs').value) || 1;
   await apiFetch('/api/config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(cfg) });
   toast('Settings saved', 'success'); pollStatus();
 }
@@ -788,22 +782,56 @@ function updateToolOptions(cid) {
   sel.innerHTML = tools.map(function(t) { return '<option value="' + t + '">' + t + '</option>'; }).join('') || '<option value="none">none</option>';
 }
 
+function onFormatChange(cid) {
+  updateToolOptions(cid);
+  var fmt        = document.getElementById('c-' + cid + '-format').value;
+  var extractRow = document.getElementById('c-' + cid + '-extractrow');
+  var swapRow    = document.getElementById('c-' + cid + '-swaprow');
+  if (extractRow) extractRow.style.display = (fmt === 'extract')  ? '' : 'none';
+  if (swapRow)    swapRow.style.display    = (fmt === 'n64swap')  ? '' : 'none';
+  if (fmt === 'n64swap') {
+    var toolSel = document.getElementById('c-' + cid + '-tool');
+    if (toolSel) toolSel.innerHTML = '<option value="n64swap">n64swap</option>';
+  }
+}
+
+function onToolChange(cid) {
+  var tool    = document.getElementById('c-' + cid + '-tool').value;
+  var swapRow = document.getElementById('c-' + cid + '-swaprow');
+  if (swapRow) swapRow.style.display = (tool === 'n64swap') ? '' : 'none';
+}
+
+async function deleteConsole(cid) {
+  if (!confirm('Delete this console? This cannot be undone.')) return;
+  await apiFetch('/api/console/' + cid, {method:'DELETE'});
+  var card = document.getElementById('card-' + cid);
+  if (card) card.remove();
+  toast('Console deleted', 'info');
+}
+
 async function saveConsoles() {
   cfg = await apiFetch('/api/config');
   Object.keys(cfg.consoles).forEach(function(cid) {
-    var folderEl   = document.getElementById('c-' + cid + '-folder');
-    var outrootEl  = document.getElementById('c-' + cid + '-outroot');
-    var formatEl   = document.getElementById('c-' + cid + '-format');
-    var toolEl     = document.getElementById('c-' + cid + '-tool');
-    var inputsEl   = document.getElementById('c-' + cid + '-inputs');
-    var enabledEl  = document.querySelector('#card-' + cid + ' input[type=checkbox]');
+    var folderEl      = document.getElementById('c-' + cid + '-folder');
+    var outrootEl     = document.getElementById('c-' + cid + '-outroot');
+    var formatEl      = document.getElementById('c-' + cid + '-format');
+    var toolEl        = document.getElementById('c-' + cid + '-tool');
+    var inputsEl      = document.getElementById('c-' + cid + '-inputs');
+    var enabledEl     = document.querySelector('#card-' + cid + ' .toggle input[type=checkbox]');
+    var delorgEl      = document.getElementById('c-' + cid + '-delorg');
+    var extractSubEl  = document.getElementById('c-' + cid + '-extractsub');
+    var swapTargetEl  = document.getElementById('c-' + cid + '-swaptarget');
     if (!folderEl) return;
-    cfg.consoles[cid].folder        = folderEl.value.trim();
-    cfg.consoles[cid].output_root   = outrootEl ? outrootEl.value.trim() : '';
-    cfg.consoles[cid].output_format = formatEl.value;
-    cfg.consoles[cid].tool          = toolEl.value;
-    cfg.consoles[cid].input_formats = inputsEl.value.split(',').map(function(s){return s.trim();}).filter(Boolean);
-    cfg.consoles[cid].enabled       = enabledEl ? enabledEl.checked : cfg.consoles[cid].enabled;
+    cfg.consoles[cid].folder               = folderEl.value.trim();
+    cfg.consoles[cid].output_root          = outrootEl ? outrootEl.value.trim() : '';
+    cfg.consoles[cid].output_format        = formatEl.value;
+    cfg.consoles[cid].tool                 = toolEl.value;
+    cfg.consoles[cid].input_formats        = inputsEl.value.split(',').map(function(s){return s.trim();}).filter(Boolean);
+    cfg.consoles[cid].enabled              = enabledEl ? enabledEl.checked : cfg.consoles[cid].enabled;
+    cfg.consoles[cid].delete_originals     = delorgEl ? delorgEl.checked : false;
+    cfg.consoles[cid].extract_to_subfolder = extractSubEl ? extractSubEl.checked : false;
+    if (!cfg.consoles[cid].options) cfg.consoles[cid].options = {};
+    if (swapTargetEl) cfg.consoles[cid].options.swap_target = swapTargetEl.value;
   });
   await apiFetch('/api/config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(cfg) });
   toast('Console rules saved', 'success');
@@ -812,7 +840,7 @@ async function saveConsoles() {
 async function addCustomConsole() {
   var id = 'custom_' + Date.now();
   cfg = await apiFetch('/api/config');
-  cfg.consoles[id] = { name:'New Console', enabled:false, folder:'NewConsole', output_root:'', input_formats:['.iso','.7z','.zip','.rar'], output_format:'7z', tool:'7z', options:{} };
+  cfg.consoles[id] = { name:'New Console', enabled:false, folder:'NewConsole', output_root:'', input_formats:['.iso','.7z','.zip','.rar'], output_format:'7z', tool:'7z', delete_originals:false, extract_to_subfolder:false, options:{} };
   await apiFetch('/api/config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(cfg) });
   renderConsoles();
   toast('New console added — scroll down', 'info');
