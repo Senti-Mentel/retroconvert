@@ -33,7 +33,8 @@ DEFAULT_CONFIG = {
             "name": "PlayStation 1",
             "enabled": True,
             "folder": "PS1",
-            "input_formats": [".bin", ".cue", ".iso", ".img", ".mdf", ".mds", ".7z", ".zip", ".rar"],
+            "output_root": "",
+            "input_formats": [".cue", ".iso", ".mds", ".7z", ".zip", ".rar"],
             "output_format": "chd",
             "tool": "chdman",
             "options": {}
@@ -42,7 +43,8 @@ DEFAULT_CONFIG = {
             "name": "PlayStation 2",
             "enabled": True,
             "folder": "PS2",
-            "input_formats": [".iso", ".bin", ".mdf", ".7z", ".zip", ".rar"],
+            "output_root": "",
+            "input_formats": [".iso", ".mds", ".7z", ".zip", ".rar"],
             "output_format": "chd",
             "tool": "chdman",
             "options": {}
@@ -51,6 +53,7 @@ DEFAULT_CONFIG = {
             "name": "PSP",
             "enabled": True,
             "folder": "PSP",
+            "output_root": "",
             "input_formats": [".iso", ".bin", ".7z", ".zip", ".rar"],
             "output_format": "cso",
             "tool": "maxcso",
@@ -60,7 +63,8 @@ DEFAULT_CONFIG = {
             "name": "Sega Saturn",
             "enabled": True,
             "folder": "Saturn",
-            "input_formats": [".bin", ".cue", ".iso", ".mdf", ".mds", ".7z", ".zip", ".rar"],
+            "output_root": "",
+            "input_formats": [".cue", ".iso", ".mds", ".7z", ".zip", ".rar"],
             "output_format": "chd",
             "tool": "chdman",
             "options": {}
@@ -69,7 +73,8 @@ DEFAULT_CONFIG = {
             "name": "Sega Dreamcast",
             "enabled": True,
             "folder": "Dreamcast",
-            "input_formats": [".gdi", ".cdi", ".bin", ".cue", ".7z", ".zip", ".rar"],
+            "output_root": "",
+            "input_formats": [".gdi", ".cdi", ".cue", ".7z", ".zip", ".rar"],
             "output_format": "chd",
             "tool": "chdman",
             "options": {}
@@ -78,6 +83,7 @@ DEFAULT_CONFIG = {
             "name": "Nintendo GameCube",
             "enabled": True,
             "folder": "GameCube",
+            "output_root": "",
             "input_formats": [".iso", ".gcm", ".7z", ".zip", ".rar"],
             "output_format": "rvz",
             "tool": "dolphin-tool",
@@ -87,6 +93,7 @@ DEFAULT_CONFIG = {
             "name": "Nintendo Wii",
             "enabled": True,
             "folder": "Wii",
+            "output_root": "",
             "input_formats": [".iso", ".wbfs", ".wad", ".7z", ".zip", ".rar"],
             "output_format": "rvz",
             "tool": "dolphin-tool",
@@ -96,6 +103,7 @@ DEFAULT_CONFIG = {
             "name": "Xbox (Original)",
             "enabled": True,
             "folder": "Xbox",
+            "output_root": "",
             "input_formats": [".iso", ".7z", ".zip", ".rar"],
             "output_format": "iso",
             "tool": "extract-xiso",
@@ -105,6 +113,7 @@ DEFAULT_CONFIG = {
             "name": "Xbox 360",
             "enabled": True,
             "folder": "Xbox360",
+            "output_root": "",
             "input_formats": [".iso", ".7z", ".zip", ".rar"],
             "output_format": "god",
             "tool": "iso2god",
@@ -114,6 +123,7 @@ DEFAULT_CONFIG = {
             "name": "NES",
             "enabled": True,
             "folder": "NES",
+            "output_root": "",
             "input_formats": [".nes", ".unf", ".7z", ".zip", ".rar"],
             "output_format": "7z",
             "tool": "7z",
@@ -123,6 +133,7 @@ DEFAULT_CONFIG = {
             "name": "SNES",
             "enabled": True,
             "folder": "SNES",
+            "output_root": "",
             "input_formats": [".smc", ".sfc", ".fig", ".swc", ".7z", ".zip", ".rar"],
             "output_format": "7z",
             "tool": "7z",
@@ -132,6 +143,7 @@ DEFAULT_CONFIG = {
             "name": "Nintendo 64",
             "enabled": True,
             "folder": "N64",
+            "output_root": "",
             "input_formats": [".z64", ".n64", ".v64", ".7z", ".zip", ".rar"],
             "output_format": "7z",
             "tool": "7z",
@@ -141,6 +153,7 @@ DEFAULT_CONFIG = {
             "name": "Game Boy Advance",
             "enabled": True,
             "folder": "GBA",
+            "output_root": "",
             "input_formats": [".gba", ".agb", ".7z", ".zip", ".rar"],
             "output_format": "7z",
             "tool": "7z",
@@ -150,6 +163,7 @@ DEFAULT_CONFIG = {
             "name": "Nintendo DS",
             "enabled": True,
             "folder": "NDS",
+            "output_root": "",
             "input_formats": [".nds", ".dsi", ".7z", ".zip", ".rar"],
             "output_format": "7z",
             "tool": "7z",
@@ -159,6 +173,7 @@ DEFAULT_CONFIG = {
             "name": "Nintendo 3DS",
             "enabled": True,
             "folder": "3DS",
+            "output_root": "",
             "input_formats": [".3ds", ".cia", ".cci", ".7z", ".zip", ".rar"],
             "output_format": "7z",
             "tool": "7z",
@@ -168,6 +183,7 @@ DEFAULT_CONFIG = {
             "name": "Arcade (MAME)",
             "enabled": True,
             "folder": "Arcade",
+            "output_root": "",
             "input_formats": [".zip", ".7z"],
             "output_format": "zip",
             "tool": "none",
@@ -202,22 +218,16 @@ def parse_game_name(filename):
     Returns (game_name, disc_number).
     game_name = original name minus disc tag only; all other tags kept.
     disc_number = int or None.
-
-    'Final Fantasy VII (USA) (Disc 1)' -> ('Final Fantasy VII (USA)', 1)
-    'Xenogears (USA) (Disc2)'          -> ('Xenogears (USA)', 2)
-    'Castlevania SOTN (USA)'           -> ('Castlevania SOTN (USA)', None)
     """
     stem = Path(filename).stem
     m    = DISC_PATTERN.search(stem)
     if not m:
         return stem.strip(), None
-
     disc_str = m.group(1)
     try:
         disc_num = int(disc_str)
     except ValueError:
         disc_num = ord(disc_str.upper()) - ord('A') + 1
-
     game_name = DISC_PATTERN.sub('', stem).strip(' -_')
     return game_name, disc_num
 
@@ -293,10 +303,6 @@ def get_logs(n=300):
 # M3U generation
 # ──────────────────────────────────────────────────────────────────────────────
 def try_write_m3u(completed_job):
-    """
-    Called after every CHD job finishes.
-    Writes the .m3u once ALL discs for a game are done (or immediately for single-disc).
-    """
     if not uses_subfolders(completed_job["output_fmt"]):
         return
     if completed_job["status"] not in ("done", "simulated"):
@@ -314,7 +320,6 @@ def try_write_m3u(completed_job):
             if j["console_id"] == console_id and j["game_name"] == game_name
         ]
 
-    # Wait if any disc is still in progress
     if any(j["status"] in ("pending", "running") for j in all_jobs):
         return
 
@@ -409,15 +414,41 @@ def extract_archive(job):
 # ──────────────────────────────────────────────────────────────────────────────
 def resolve_output_dir(job):
     """
-    CHD consoles  → /console_folder/Game Name (Region)/
-    Everything else → /console_folder/   (flat)
+    CHD consoles:
+      - If console has output_root set: use that as the base for the game subfolder.
+      - Otherwise: walk up from source file to find the console root folder by name.
+    Non-CHD consoles: flat output next to the source file.
     """
-    src_dir = os.path.dirname(job["src"])
-    if uses_subfolders(job["output_fmt"]):
-        game_folder = os.path.join(src_dir, job["game_name"])
+    src_path = Path(job["src"])
+
+    if not uses_subfolders(job["output_fmt"]):
+        return str(src_path.parent)
+
+    cfg      = load_config()
+    cons     = cfg["consoles"].get(job["console_id"], {})
+    out_root = cons.get("output_root", "").strip()
+
+    if out_root:
+        # User explicitly configured the output root — use it directly
+        game_folder = os.path.join(out_root, job["game_name"])
         os.makedirs(game_folder, exist_ok=True)
         return game_folder
-    return src_dir
+
+    # Fallback: walk up from source file to find the console root folder by name
+    folder       = cons.get("folder", "").lower()
+    console_root = None
+    for parent in src_path.parents:
+        if parent.name.lower() == folder:
+            console_root = str(parent)
+            break
+
+    if console_root is None:
+        # Last resort: two levels up from source file
+        console_root = str(src_path.parent.parent)
+
+    game_folder = os.path.join(console_root, job["game_name"])
+    os.makedirs(game_folder, exist_ok=True)
+    return game_folder
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -430,8 +461,6 @@ def build_command(job, src_file):
     out_dir = resolve_output_dir(job)
     out_fmt = console["output_format"]
 
-    # Output filename stem: use original src stem (preserves Disc N tag in output name)
-    # If src was an archive, use the extracted file's stem so we get the correct disc name
     if Path(job["src"]).suffix.lower() in ARCHIVE_EXTS:
         out_stem = Path(src_file).stem
     else:
@@ -529,7 +558,6 @@ def run_job(job):
     if job["disc_num"]:
         append_log(f"   🗂 Game: {job['game_name']} — Disc {job['disc_num']}")
 
-    # Step 1: Extract archive if needed
     src_file, tmp_dir = extract_archive(job)
     job["extracted_tmp"] = tmp_dir
     if src_file is None:
@@ -538,10 +566,9 @@ def run_job(job):
         _cleanup(job)
         return
 
-    # Step 2: Build command
-    cfg    = load_config()
-    cons   = cfg["consoles"].get(job["console_id"], {})
-    tool   = cons.get("tool", "none")
+    cfg  = load_config()
+    cons = cfg["consoles"].get(job["console_id"], {})
+    tool = cons.get("tool", "none")
 
     if tool == "none":
         job["status"]       = "skipped"
@@ -561,7 +588,6 @@ def run_job(job):
     job["command"] = " ".join(str(c) for c in cmd)
     job["dst"]     = dst
 
-    # Step 3: Run with live progress
     try:
         proc = subprocess.Popen(
             cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
@@ -608,8 +634,6 @@ def run_job(job):
         append_log(f"❌ Exception: {job['filename']}: {e}")
 
     _cleanup(job)
-
-    # Step 4: Try to write M3U after every CHD job completes
     try_write_m3u(job)
 
 

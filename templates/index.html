@@ -631,7 +631,8 @@ function buildConsoleCard(cid, cons) {
       <div class="field-row"><label>Folder name</label><input type="text" id="c-${cid}-folder" value="${cons.folder}"></div>
       <div class="field-row"><label>Output format</label><select id="c-${cid}-format" onchange="updateToolOptions('${cid}')">${fmtOptions}</select></div>
       <div class="field-row"><label>Tool</label><select id="c-${cid}-tool">${toolOptions || `<option value="${cons.tool}">${cons.tool}</option>`}</select></div>
-      <div class="field-row"><label>Input exts</label><input type="text" id="c-${cid}-inputs" value="${cons.input_formats.join(', ')}" placeholder=".bin, .cue, .iso, .7z, .zip, .rar"></div>
+      <div class="field-row"><label>Input exts</label><input type="text" id="c-${cid}-inputs" value="${cons.input_formats.join(', ')}" placeholder=".cue, .iso, .7z, .zip, .rar"></div>
+      <div class="field-row"><label>Output root</label><input type="text" id="c-${cid}-outroot" value="${cons.output_root||''}" placeholder="Leave blank for auto-detect"></div>
     </div>`;
   return div;
 }
@@ -672,6 +673,8 @@ async function saveConsoles() {
     cfg.consoles[cid].tool          = toolEl.value;
     cfg.consoles[cid].input_formats = inputsEl.value.split(',').map(s=>s.trim()).filter(Boolean);
     cfg.consoles[cid].enabled       = enabledEl?.checked ?? cfg.consoles[cid].enabled;
+    const outrootEl = document.getElementById('c-' + cid + '-outroot');
+    if (outrootEl) cfg.consoles[cid].output_root = outrootEl.value.trim();
   }
   await apiFetch('/api/config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(cfg) });
   toast('Console rules saved', 'success');
