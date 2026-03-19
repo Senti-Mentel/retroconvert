@@ -6,9 +6,9 @@ services:
     container_name: retroconvert
     restart: unless-stopped
     ports:
-      - "5000:5000"
+      - "5004:5000"
     volumes:
-      - /mnt/lxc_shares/nas_rwx/Storage/MassStorage/RetroConvertTest/Roms:/roms
+      - /mnt/Storage/MassStorage/RetroConvertTest/Roms:/roms
       - retroconvert_data:/app/data
     environment:
       - PYTHONUNBUFFERED=1
