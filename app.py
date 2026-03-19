@@ -696,19 +696,35 @@ def enqueue_file(filepath, cfg):
     disc_info = f" — Disc {job['disc_num']}" if job["disc_num"] else ""
     append_log(f"📥 Queued: {job['filename']} ({cons['name']}){disc_info}")
 
+def wait_and_enqueue(filepath):
+    """Wait until file size is stable before queuing — handles slow network transfers."""
+    stable_for = 0
+    last_size  = -1
+    while stable_for < 3:
+        try:
+            size = os.path.getsize(filepath)
+        except OSError:
+            time.sleep(10)
+            continue
+        if size == last_size and size > 0:
+            stable_for += 1
+        else:
+            stable_for = 0
+        last_size = size
+        time.sleep(10)
+    cfg = load_config()
+    enqueue_file(filepath, cfg)
+
 class ROMHandler(FileSystemEventHandler):
     def on_created(self, event):
         if event.is_directory:
             return
-        time.sleep(2)
-        cfg = load_config()
-        enqueue_file(event.src_path, cfg)
+        threading.Thread(target=wait_and_enqueue, args=(event.src_path,), daemon=True).start()
 
     def on_moved(self, event):
         if event.is_directory:
             return
-        cfg = load_config()
-        enqueue_file(event.dest_path, cfg)
+        threading.Thread(target=wait_and_enqueue, args=(event.dest_path,), daemon=True).start()
 
 observer      = None
 observer_lock = threading.Lock()
