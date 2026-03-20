@@ -30,6 +30,15 @@ body::before { content: ''; position: fixed; inset: 0; background: repeating-lin
 .header { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: center; gap: 24px; height: 60px; position: sticky; top: 0; z-index: 100; }
 .logo { font-family: var(--font-mono); font-size: 1.4rem; color: var(--accent); text-shadow: 0 0 20px rgba(0,212,255,0.5); letter-spacing: 2px; white-space: nowrap; }
 .logo span { color: var(--accent2); }
+.header-links { display: flex; gap: 8px; flex-shrink: 0; align-items: center; }
+.header-btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 6px; font-family: var(--font-main); font-size: 0.78rem; font-weight: 600; text-decoration: none; transition: all 0.15s; border: 1px solid var(--border); color: var(--text2); background: var(--bg3); white-space: nowrap; }
+.header-btn:hover { transform: translateY(-1px); filter: brightness(1.2); }
+.header-btn-github { border-color: #444; color: #ccc; }
+.header-btn-github:hover { border-color: #aaa; color: #fff; background: #222; }
+.header-btn-coffee { border-color: #f59e0b; color: #f59e0b; background: rgba(245,158,11,0.1); }
+.header-btn-coffee:hover { background: rgba(245,158,11,0.2); }
+.header-btn-social { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,0.08); }
+.header-btn-social:hover { background: rgba(0,212,255,0.15); }
 .status-bar { display: flex; gap: 12px; flex: 1; font-size: 0.78rem; font-family: var(--font-mono); flex-wrap: wrap; }
 .stat-chip { display: flex; align-items: center; gap: 6px; background: var(--bg3); border: 1px solid var(--border); padding: 4px 10px; border-radius: 4px; color: var(--text2); }
 .stat-chip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); }
@@ -171,6 +180,11 @@ tr:hover td { background: rgba(0,212,255,0.02); }
     <div class="stat-chip running"><span class="dot"></span><span id="chip-running">0 running</span></div>
     <div class="stat-chip done"><span class="dot"></span><span id="chip-done">0 done</span></div>
     <div class="stat-chip errors"><span class="dot"></span><span id="chip-errors">0 errors</span></div>
+  </div>
+  <div class="header-links">
+    <a href="https://github.com/Senti-Mentel/retroconvert/tree/main" target="_blank" class="header-btn header-btn-github">&#128025; GitHub</a>
+    <a href="https://buymeacoffee.com/senti_mentel" target="_blank" class="header-btn header-btn-coffee">&#9749; Buy me a Coffee!!</a>
+    <a href="https://links.sentimenteltech.com" target="_blank" class="header-btn header-btn-social">&#127760; Social</a>
   </div>
 </header>
 <div class="app">
